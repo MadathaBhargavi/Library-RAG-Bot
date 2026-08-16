@@ -7,7 +7,8 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from backend.config import settings
 from backend.models.schemas import (
     ChatRequest, ChatResponse, HealthResponse, DocumentInfo,
-    SearchRequest, SearchResult, SettingsResponse, SettingsUpdate
+    SearchRequest, SearchResult, SettingsResponse, SettingsUpdate,
+    SummaryRequest, SummaryResponse
 )
 from backend.rag.loader import DocumentLoader
 from backend.rag.text_splitter import RecursiveTextSplitter
@@ -19,6 +20,9 @@ router = APIRouter(prefix="/api")
 # Singleton vector store and RAG pipeline instances
 vector_store = VectorStore()
 rag_pipeline = RAGPipeline(vector_store)
+queries_counter = 0
+
+SUPPORTED_EXTENSIONS = [".pdf", ".docx", ".txt", ".md", ".png", ".jpg", ".jpeg", ".webp", ".bmp"]
 
 def index_all_documents():
     """Helper function to load and index all files in DOCUMENTS_DIR."""
@@ -30,7 +34,7 @@ def index_all_documents():
     if os.path.exists(docs_dir):
         for entry in os.listdir(docs_dir):
             file_path = docs_dir / entry
-            if file_path.is_file() and file_path.suffix.lower() in [".pdf", ".docx", ".txt", ".md"]:
+            if file_path.is_file() and file_path.suffix.lower() in SUPPORTED_EXTENSIONS:
                 try:
                     sections = DocumentLoader.load_document(file_path)
                     for sec in sections:
@@ -41,7 +45,7 @@ def index_all_documents():
 
     if total_chunks:
         vector_store.add_chunks(total_chunks)
-    print(f"[Indexer] Indexed {len(total_chunks)} chunks across library knowledge base.")
+    print(f"[Indexer] Indexed {len(total_chunks)} chunks across document knowledge base.")
     return len(total_chunks)
 
 # Trigger initial indexing if vector store is empty
@@ -60,6 +64,7 @@ def get_health():
         status="ok",
         documents_count=len(doc_files),
         total_chunks=len(vector_store.chunks),
+        queries_count=queries_counter,
         vector_store="active",
         has_gemini_key=bool(settings.GEMINI_API_KEY)
     )
@@ -68,42 +73,54 @@ def get_health():
 @router.post("/chat", response_model=ChatResponse)
 def chat_endpoint(request: ChatRequest):
     """Chat endpoint executing RAG pipeline for user questions."""
+    global queries_counter
+    queries_counter += 1
     try:
-        response = rag_pipeline.run(query=request.message, history=request.history)
+        response = rag_pipeline.run(
+            query=request.message,
+            document_id=request.document_id,
+            history=request.history
+        )
         return response
     except Exception as e:
         print(f"[API Chat Error]: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while processing your request: {str(e)}"
+            detail=f"An error occurred while processing your question: {str(e)}"
         )
 
 
 @router.get("/documents", response_model=List[DocumentInfo])
 def list_documents():
-    """Returns list of library documents with chunk counts and status."""
+    """Returns list of uploaded documents with page count, chunk counts, and indexing status."""
     docs_dir = settings.DOCUMENTS_DIR
     result: List[DocumentInfo] = []
 
     if not os.path.exists(docs_dir):
         return []
 
-    # Map file -> chunk count
+    # Map file -> chunk count and max page
     chunk_counts = {}
+    pages_counts = {}
+    
     for chunk in vector_store.chunks:
-        src = chunk["metadata"].get("source")
+        src = chunk.get("metadata", {}).get("source")
+        page = chunk.get("metadata", {}).get("page")
         if src:
             chunk_counts[src] = chunk_counts.get(src, 0) + 1
+            if page:
+                pages_counts[src] = max(pages_counts.get(src, 1), page)
 
     for idx, filename in enumerate(os.listdir(docs_dir)):
         filepath = docs_dir / filename
         if filepath.is_file():
             ext = filepath.suffix.lower()
-            if ext in [".pdf", ".docx", ".txt", ".md"]:
+            if ext in SUPPORTED_EXTENSIONS:
                 stat = filepath.stat()
                 file_type = ext.replace(".", "").upper()
                 indexed_date = time.strftime('%Y-%m-%d %H:%M', time.localtime(stat.st_mtime))
                 chunks_cnt = chunk_counts.get(filename, 0)
+                pages_cnt = pages_counts.get(filename, 1 if chunks_cnt > 0 else None)
 
                 result.append(DocumentInfo(
                     id=f"doc-{idx+1}",
@@ -112,6 +129,7 @@ def list_documents():
                     file_size=stat.st_size,
                     status="Indexed" if chunks_cnt > 0 else "Pending",
                     chunks_count=chunks_cnt,
+                    pages_count=pages_cnt,
                     indexed_at=indexed_date
                 ))
 
@@ -120,30 +138,28 @@ def list_documents():
 
 @router.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...)):
-    """Uploads a new document (.pdf, .docx, .txt, .md) and indexes it into the vector store."""
+    """Uploads a new document (PDF, DOCX, TXT, MD, Images/OCR) and indexes it into the vector store."""
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid upload. Filename is missing."
         )
 
-    # Sanitize filename to prevent path traversal
     safe_filename = Path(file.filename).name
     ext = Path(safe_filename).suffix.lower()
 
-    if ext not in [".pdf", ".docx", ".txt", ".md"]:
+    if ext not in SUPPORTED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file format '{ext}'. Please upload PDF, DOCX, TXT, or MD files."
+            detail=f"Unsupported file format '{ext}'. Please upload PDF, DOCX, TXT, MD, or Image files."
         )
 
-    # Enforce maximum file size (20 MB)
-    MAX_FILE_SIZE = 20 * 1024 * 1024
+    MAX_FILE_SIZE = 25 * 1024 * 1024
     file_bytes = await file.read()
     if len(file_bytes) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File size exceeds maximum allowed limit of 20MB."
+            detail=f"File size exceeds maximum allowed limit of 25MB."
         )
 
     destination = settings.DOCUMENTS_DIR / safe_filename
@@ -156,9 +172,7 @@ async def upload_document(file: UploadFile = File(...)):
             detail=f"Failed to save uploaded file: {str(e)}"
         )
 
-    # Ingest and index uploaded document
     try:
-        # Purge existing chunks if re-uploading same file name (deduplication)
         vector_store.delete_document(safe_filename)
 
         sections = DocumentLoader.load_document(destination)
@@ -176,7 +190,6 @@ async def upload_document(file: UploadFile = File(...)):
                 chunks.append(chk)
 
         if not chunks:
-            # Cleanup saved file if no readable text could be extracted
             if destination.exists():
                 os.remove(destination)
             raise HTTPException(
@@ -200,6 +213,12 @@ async def upload_document(file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to index document '{safe_filename}': {str(e)}"
         )
+
+
+@router.post("/documents/{filename}/summarize", response_model=SummaryResponse)
+def summarize_document(filename: str, request: SummaryRequest = SummaryRequest()):
+    """Generates a summary for a specific uploaded document."""
+    return rag_pipeline.summarize_document(filename=filename, summary_type=request.summary_type)
 
 
 @router.delete("/documents/{filename}")
@@ -243,18 +262,20 @@ def search_knowledge_base(request: SearchRequest):
     results = vector_store.search(
         query=request.query,
         top_k=request.top_k or 5,
-        threshold=0.0
+        threshold=0.0,
+        document_id=request.document_id
     )
 
     output = []
     for idx, item in enumerate(results):
-        meta = item["metadata"]
+        meta = item.get("metadata", {})
         output.append(SearchResult(
             id=item.get("id", f"chk-{idx}"),
             document=meta.get("source", "Unknown"),
             section=meta.get("section", "General"),
+            page=meta.get("page"),
             score=item.get("score", 0.0),
-            snippet=item["text"],
+            snippet=item.get("text", ""),
             chunk_index=meta.get("chunk_index", 0)
         ))
 
@@ -295,4 +316,8 @@ def update_settings(update: SettingsUpdate):
     if update.top_k is not None:
         settings.TOP_K_RESULTS = update.top_k
 
+    if update.similarity_threshold is not None:
+        settings.SIMILARITY_THRESHOLD = update.similarity_threshold
+
     return get_settings()
+

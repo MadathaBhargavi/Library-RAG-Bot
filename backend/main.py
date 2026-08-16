@@ -16,8 +16,8 @@ from backend.config import settings
 from backend.api.routes import router as api_router
 
 app = FastAPI(
-    title="Library RAG Bot API",
-    description="Retrieval-Augmented Generation (RAG) AI Chatbot for Library Knowledge Base",
+    title="Book & Document RAG Assistant API",
+    description="Retrieval-Augmented Generation (RAG) AI Assistant for Books and Uploaded Documents",
     version="1.0.0"
 )
 

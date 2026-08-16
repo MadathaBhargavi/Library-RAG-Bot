@@ -10,13 +10,14 @@ class Settings:
         self.PORT: int = int(os.getenv("PORT", "8000"))
         self.DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
         
-        self.DOCUMENTS_DIR: Path = BASE_DIR / os.getenv("DOCUMENTS_DIR", "documents/sample_library_data")
+        self.DOCUMENTS_DIR: Path = BASE_DIR / os.getenv("DOCUMENTS_DIR", "documents/uploaded_documents")
         self.VECTOR_STORE_DIR: Path = BASE_DIR / os.getenv("VECTOR_STORE_DIR", "vector_store")
         
         self.CHUNK_SIZE: int = int(os.getenv("CHUNK_SIZE", "600"))
         self.CHUNK_OVERLAP: int = int(os.getenv("CHUNK_OVERLAP", "100"))
-        self.TOP_K_RESULTS: int = int(os.getenv("TOP_K_RESULTS", "4"))
-        self.SIMILARITY_THRESHOLD: float = float(os.getenv("SIMILARITY_THRESHOLD", "0.15"))
+        self.TOP_K_RESULTS: int = int(os.getenv("TOP_K_RESULTS", "5"))
+        self.SIMILARITY_THRESHOLD: float = float(os.getenv("SIMILARITY_THRESHOLD", "0.10"))
+        self.TEMPERATURE: float = float(os.getenv("TEMPERATURE", "0.2"))
         
         # Ensure directories exist
         os.makedirs(self.DOCUMENTS_DIR, exist_ok=True)

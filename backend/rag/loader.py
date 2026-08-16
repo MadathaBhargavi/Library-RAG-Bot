@@ -33,8 +33,40 @@ class DocumentLoader:
             return DocumentLoader._load_docx(path, filename)
         elif ext in [".txt", ".md"]:
             return DocumentLoader._load_text(path, filename, ext)
+        elif ext in [".png", ".jpg", ".jpeg", ".webp", ".bmp"]:
+            return DocumentLoader._load_image(path, filename)
         else:
             raise ValueError(f"Unsupported document format: {ext}")
+
+    @staticmethod
+    def _load_image(path: Path, filename: str) -> List[Dict[str, Any]]:
+        sections = []
+        extracted_text = ""
+        try:
+            from PIL import Image
+            img = Image.open(path)
+            
+            # Try pytesseract OCR if installed
+            try:
+                import pytesseract
+                extracted_text = pytesseract.image_to_string(img)
+            except Exception as ocr_err:
+                print(f"[OCR Notice]: pytesseract unavailable, using fallback text: {ocr_err}")
+                extracted_text = f"Image content from {filename}. (Visual document/book screenshot: Width={img.width}px, Height={img.height}px, Format={img.format})"
+        except Exception as e:
+            print(f"[Error reading image {filename}]: {e}")
+            extracted_text = f"Image file: {filename}"
+
+        sections.append({
+            "text": extracted_text.strip() or f"Image file {filename}",
+            "metadata": {
+                "source": filename,
+                "file_type": "IMAGE",
+                "section": "Screenshot OCR / Book Image",
+                "page": 1
+            }
+        })
+        return sections
 
     @staticmethod
     def _load_pdf(path: Path, filename: str) -> List[Dict[str, Any]]:

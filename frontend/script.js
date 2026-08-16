@@ -1,15 +1,17 @@
 /**
- * Library RAG Bot - Frontend Application JavaScript
+ * Book & Document RAG Assistant - Frontend Application JavaScript
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    const API_BASE_URL = 'https://library-rag-bot.onrender.com';
     // State Management
     const state = {
         activeTab: 'chat',
+        selectedDocumentId: 'all',
         chatHistory: [],
         documents: [],
         hasGeminiKey: false,
-        theme: localStorage.getItem('library_rag_theme') || 'dark'
+        theme: localStorage.getItem('document_rag_theme') || 'light'
     };
 
     // DOM Elements
@@ -19,55 +21,66 @@ document.addEventListener('DOMContentLoaded', () => {
         openSidebarBtn: document.getElementById('openSidebarBtn'),
         closeSidebarBtn: document.getElementById('closeSidebarBtn'),
         pageTitle: document.getElementById('pageTitle'),
+        pageSubtitle: document.getElementById('pageSubtitle'),
         themeToggleBtn: document.getElementById('themeToggleBtn'),
         navItems: document.querySelectorAll('.nav-item'),
         tabViews: document.querySelectorAll('.tab-view'),
         newChatBtn: document.getElementById('newChatBtn'),
-        clearChatBtn: document.getElementById('clearChatBtn'),
         navDocBadge: document.getElementById('navDocBadge'),
-        
-        // Status Indicators
+        sidebarDocList: document.getElementById('sidebarDocList'),
+        sidebarDocCount: document.getElementById('sidebarDocCount'),
+        sidebarChunkCount: document.getElementById('sidebarChunkCount'),
+        sidebarEngineType: document.getElementById('sidebarEngineType'),
+        refreshStatusBtn: document.getElementById('refreshStatusBtn'),
+
+        // Chat Selectors & Banners
+        chatDocSelector: document.getElementById('chatDocSelector'),
+        searchDocFilterSelect: document.getElementById('searchDocFilterSelect'),
+        selectedDocBanner: document.getElementById('selectedDocBanner'),
+        activeDocNameText: document.getElementById('activeDocNameText'),
+        activeDocStatusText: document.getElementById('activeDocStatusText'),
+        vectorStatusPill: document.getElementById('vectorStatusPill'),
         vectorStatusText: document.getElementById('vectorStatusText'),
-        engineStatusText: document.getElementById('engineStatusText'),
 
         // Chat Elements
         welcomeCard: document.getElementById('welcomeCard'),
+        heroUploadBtn: document.getElementById('heroUploadBtn'),
         chatMessages: document.getElementById('chatMessages'),
         typingIndicator: document.getElementById('typingIndicator'),
         chatForm: document.getElementById('chatForm'),
         chatInput: document.getElementById('chatInput'),
         sendBtn: document.getElementById('sendBtn'),
+        chatAttachBtn: document.getElementById('chatAttachBtn'),
         suggestedPills: document.getElementById('suggestedPills'),
 
-        // Knowledge Base Dashboard Elements
-        reindexBtn: document.getElementById('reindexBtn'),
-        openUploadModalBtn: document.getElementById('openUploadModalBtn'),
-        statTotalDocs: document.getElementById('statTotalDocs'),
-        statTotalChunks: document.getElementById('statTotalChunks'),
-        statStorageEngine: document.getElementById('statStorageEngine'),
+        // Right Panel Elements
+        rightScopeVal: document.getElementById('rightScopeVal'),
+        rightChunksVal: document.getElementById('rightChunksVal'),
+        goToDocsBtn: document.getElementById('goToDocsBtn'),
+        quickUploadBtn: document.getElementById('quickUploadBtn'),
+        quickReindexBtn: document.getElementById('quickReindexBtn'),
+        quickClearBtn: document.getElementById('quickClearBtn'),
+
+        // My Documents Tab Elements
+        documentsTabDropzone: document.getElementById('documentsTabDropzone'),
+        dropzoneBrowseBtn: document.getElementById('dropzoneBrowseBtn'),
+        documentsTabFileInput: document.getElementById('documentsTabFileInput'),
+        reindexAllBtn: document.getElementById('reindexAllBtn'),
+        refreshDocsBtn: document.getElementById('refreshDocsBtn'),
         documentsTableBody: document.getElementById('documentsTableBody'),
         docTableSearch: document.getElementById('docTableSearch'),
 
-        // Upload Modal Elements
-        uploadModal: document.getElementById('uploadModal'),
-        closeUploadModalBtn: document.getElementById('closeUploadModalBtn'),
-        cancelUploadBtn: document.getElementById('cancelUploadBtn'),
-        dropzone: document.getElementById('dropzone'),
-        fileInput: document.getElementById('fileInput'),
-        selectedFileInfo: document.getElementById('selectedFileInfo'),
-        selectedFileName: document.getElementById('selectedFileName'),
-        removeFileBtn: document.getElementById('removeFileBtn'),
-        submitUploadBtn: document.getElementById('submitUploadBtn'),
-
-        // Chunk Inspector Modal Elements
-        chunkModal: document.getElementById('chunkModal'),
-        closeChunkModalBtn: document.getElementById('closeChunkModalBtn'),
-        chunkModalBody: document.getElementById('chunkModalBody'),
-
-        // Vector Search Elements
+        // Vector Search Tab Elements
         vectorSearchForm: document.getElementById('vectorSearchForm'),
         vectorQueryInput: document.getElementById('vectorQueryInput'),
         vectorResultsContainer: document.getElementById('vectorResultsContainer'),
+
+        // Dashboard Tab Elements
+        dashTotalDocs: document.getElementById('dashTotalDocs'),
+        dashTotalChunks: document.getElementById('dashTotalChunks'),
+        dashTotalQueries: document.getElementById('dashTotalQueries'),
+        dashEngineName: document.getElementById('dashEngineName'),
+        dashGeminiKeyStatus: document.getElementById('dashGeminiKeyStatus'),
 
         // Settings Elements
         settingsForm: document.getElementById('settingsForm'),
@@ -80,9 +93,31 @@ document.addEventListener('DOMContentLoaded', () => {
         topKInput: document.getElementById('topKInput'),
         topKVal: document.getElementById('topKVal'),
 
+        // Upload Modal Elements
+        uploadModal: document.getElementById('uploadModal'),
+        closeUploadModalBtn: document.getElementById('closeUploadModalBtn'),
+        cancelUploadBtn: document.getElementById('cancelUploadBtn'),
+        modalDropzone: document.getElementById('modalDropzone'),
+        modalFileInput: document.getElementById('modalFileInput'),
+        modalSelectedFileInfo: document.getElementById('modalSelectedFileInfo'),
+        modalSelectedFileName: document.getElementById('modalSelectedFileName'),
+        modalRemoveFileBtn: document.getElementById('modalRemoveFileBtn'),
+        submitUploadBtn: document.getElementById('submitUploadBtn'),
+
+        // Summary Modal Elements
+        summaryModal: document.getElementById('summaryModal'),
+        closeSummaryModalBtn: document.getElementById('closeSummaryModalBtn'),
+        closeSummaryBtn: document.getElementById('closeSummaryBtn'),
+        summaryDocName: document.getElementById('summaryDocName'),
+        summaryContentBox: document.getElementById('summaryContentBox'),
+        summaryTypeBtns: document.querySelectorAll('.summary-type-btn'),
+
         // Toast Container
         toastContainer: document.getElementById('toastContainer')
     };
+
+    let currentSummaryFilename = '';
+    let selectedUploadFile = null;
 
     // Initialize Application
     init();
@@ -102,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         state.theme = theme;
-        localStorage.setItem('library_rag_theme', theme);
+        localStorage.setItem('document_rag_theme', theme);
         const icon = elements.themeToggleBtn.querySelector('i');
         if (theme === 'light') {
             icon.className = 'fa-solid fa-sun';
@@ -113,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function switchTab(tabId) {
         state.activeTab = tabId;
-        
+
         elements.navItems.forEach(item => {
             if (item.dataset.tab === tabId) {
                 item.classList.add('active');
@@ -130,80 +165,69 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Update Header Titles based on tab
         const titles = {
-            'chat': 'Chat Assistant',
-            'knowledge': 'Knowledge Base Dashboard',
-            'vector-search': 'Vector Search Explorer',
-            'settings': 'Settings & RAG Configuration'
+            'chat': { title: 'Book & Document RAG Assistant', sub: 'Ask questions about your uploaded books and documents' },
+            'documents': { title: 'Document Library ("My Documents")', sub: 'Upload, manage, summarize, and search your document collection' },
+            'vector-search': { title: 'Inside Document Search', sub: 'Perform semantic and keyword search across indexed document passages' },
+            'dashboard': { title: 'RAG Analytics Dashboard', sub: 'System health, indexed chunks, and vector store stats' },
+            'settings': { title: 'RAG Parameters & Settings', sub: 'Configure chunk sizes, similarity thresholds, and AI models' }
         };
-        elements.pageTitle.textContent = titles[tabId] || 'Library RAG Bot';
 
-        if (window.innerWidth <= 768) {
-            elements.sidebar.classList.remove('mobile-open');
+        if (titles[tabId]) {
+            elements.pageTitle.textContent = titles[tabId].title;
+            elements.pageSubtitle.textContent = titles[tabId].sub;
         }
 
-        if (tabId === 'knowledge') {
-            fetchDocumentsList();
-        }
+        // Close sidebar on mobile
+        elements.sidebar.classList.remove('mobile-open');
+
+        if (tabId === 'documents') fetchDocumentsList();
+        if (tabId === 'dashboard') fetchSystemHealth();
     }
 
     function setupEventListeners() {
-        // Theme toggle
+        // Theme Toggle
         elements.themeToggleBtn.addEventListener('click', () => {
-            applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+            const nextTheme = state.theme === 'light' ? 'dark' : 'light';
+            applyTheme(nextTheme);
         });
 
-        // Header settings button
-        const headerSettingsBtn = document.getElementById('headerSettingsBtn');
-        if (headerSettingsBtn) {
-            headerSettingsBtn.addEventListener('click', () => switchTab('settings'));
-        }
-
-        // Mobile drawer
+        // Mobile Sidebar Toggle
         elements.openSidebarBtn.addEventListener('click', () => {
             elements.sidebar.classList.add('mobile-open');
         });
+
         elements.closeSidebarBtn.addEventListener('click', () => {
             elements.sidebar.classList.remove('mobile-open');
         });
 
-        // Tab click
+        // Navigation Click
         elements.navItems.forEach(item => {
-            item.addEventListener('click', () => switchTab(item.dataset.tab));
+            item.addEventListener('click', () => {
+                switchTab(item.dataset.tab);
+            });
         });
 
-        // Recent conversation history item click
-        const historyList = document.getElementById('historyList');
-        if (historyList) {
-            historyList.addEventListener('click', (e) => {
-                const item = e.target.closest('.history-item');
-                if (item && item.dataset.topic) {
-                    elements.chatInput.value = item.dataset.topic;
-                    switchTab('chat');
-                    handleChatSubmit();
-                }
+        // Document Target Selector Change
+        elements.chatDocSelector.addEventListener('change', (e) => {
+            state.selectedDocumentId = e.target.value;
+            updateSelectedDocUI();
+        });
+
+        if (elements.searchDocFilterSelect) {
+            elements.searchDocFilterSelect.addEventListener('change', (e) => {
+                state.selectedDocumentId = e.target.value;
             });
         }
 
-        // New & Clear Chat
-        elements.newChatBtn.addEventListener('click', resetChat);
-        elements.clearChatBtn.addEventListener('click', resetChat);
-
-        // Suggested questions
-        elements.suggestedPills.addEventListener('click', (e) => {
-            const btn = e.target.closest('.suggested-pill');
-            if (btn && btn.dataset.query) {
-                elements.chatInput.value = btn.dataset.query;
-                handleChatSubmit();
-            }
+        // Chat Form Submit
+        elements.chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleChatSubmit();
         });
 
-        // Auto-expand chat textarea & submit on Enter
-        elements.chatInput.addEventListener('input', () => {
-            elements.chatInput.style.height = 'auto';
-            elements.chatInput.style.height = (elements.chatInput.scrollHeight) + 'px';
-        });
-
+        // Chat Auto-grow Textarea
         elements.chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -211,571 +235,671 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        elements.chatForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            handleChatSubmit();
+        // Suggested Question Pills
+        elements.suggestedPills.addEventListener('click', (e) => {
+            const pill = e.target.closest('.pill-btn');
+            if (pill && pill.dataset.query) {
+                elements.chatInput.value = pill.dataset.query;
+                handleChatSubmit();
+            }
         });
 
-        // Knowledge Base Action listeners
-        const refreshDocsBtn = document.getElementById('refreshDocsBtn');
-        if (refreshDocsBtn) {
-            refreshDocsBtn.addEventListener('click', () => {
-                fetchSystemHealth();
-                fetchDocumentsList();
-                showToast('Refreshed document list.', 'info');
+        // Quick Actions
+        elements.newChatBtn.addEventListener('click', clearChatHistory);
+        elements.quickClearBtn.addEventListener('click', clearChatHistory);
+        elements.quickReindexBtn.addEventListener('click', triggerReindex);
+        elements.reindexAllBtn?.addEventListener('click', triggerReindex);
+        elements.refreshDocsBtn?.addEventListener('click', fetchDocumentsList);
+        elements.refreshStatusBtn?.addEventListener('click', fetchSystemHealth);
+
+        elements.goToDocsBtn.addEventListener('click', () => switchTab('documents'));
+        elements.heroUploadBtn?.addEventListener('click', openUploadModal);
+        elements.quickUploadBtn.addEventListener('click', openUploadModal);
+        elements.chatAttachBtn.addEventListener('click', openUploadModal);
+
+        // Upload Modal Handlers
+        elements.closeUploadModalBtn.addEventListener('click', closeUploadModal);
+        elements.cancelUploadBtn.addEventListener('click', closeUploadModal);
+
+        elements.modalDropzone.addEventListener('click', () => elements.modalFileInput.click());
+        elements.modalFileInput.addEventListener('change', (e) => handleFileSelected(e.target.files[0]));
+
+        elements.modalDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            elements.modalDropzone.classList.add('drag-over');
+        });
+
+        elements.modalDropzone.addEventListener('dragleave', () => elements.modalDropzone.classList.remove('drag-over'));
+        elements.modalDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            elements.modalDropzone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                handleFileSelected(e.dataTransfer.files[0]);
+            }
+        });
+
+        elements.modalRemoveFileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetModalFileInput();
+        });
+
+        elements.submitUploadBtn.addEventListener('click', handleFileUpload);
+
+        // Documents Tab Dropzone
+        if (elements.documentsTabDropzone) {
+            elements.documentsTabDropzone.addEventListener('click', () => elements.documentsTabFileInput.click());
+            elements.dropzoneBrowseBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                elements.documentsTabFileInput.click();
+            });
+            elements.documentsTabFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFileSelected(e.target.files[0]);
+                    openUploadModal();
+                }
             });
         }
-        
-        const refreshStatusBtn = document.getElementById('refreshStatusBtn');
-        if (refreshStatusBtn) {
-            refreshStatusBtn.addEventListener('click', () => {
-                fetchSystemHealth();
-                fetchDocumentsList();
-                showToast('Refreshed status.', 'info');
+
+        // Summary Modal Handlers
+        elements.closeSummaryModalBtn?.addEventListener('click', closeSummaryModal);
+        elements.closeSummaryBtn?.addEventListener('click', closeSummaryModal);
+
+        elements.summaryTypeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                elements.summaryTypeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if (currentSummaryFilename) {
+                    fetchDocumentSummary(currentSummaryFilename, btn.dataset.type);
+                }
             });
-        }
+        });
 
-        const goToKbBtn = document.getElementById('goToKbBtn');
-        if (goToKbBtn) {
-            goToKbBtn.addEventListener('click', () => switchTab('knowledge'));
-        }
+        // Document Table Search Filter
+        elements.docTableSearch?.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const rows = elements.documentsTableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
 
-        const quickUploadBtn = document.getElementById('quickUploadBtn');
-        if (quickUploadBtn) {
-            quickUploadBtn.addEventListener('click', () => openModal(elements.uploadModal));
-        }
-
-        const quickReindexBtn = document.getElementById('quickReindexBtn');
-        if (quickReindexBtn) {
-            quickReindexBtn.addEventListener('click', triggerReindex);
-        }
-
-        const quickClearBtn = document.getElementById('quickClearBtn');
-        if (quickClearBtn) {
-            quickClearBtn.addEventListener('click', resetChat);
-        }
-
-        elements.reindexBtn.addEventListener('click', triggerReindex);
-        elements.openUploadModalBtn.addEventListener('click', () => openModal(elements.uploadModal));
-        elements.closeUploadModalBtn.addEventListener('click', () => closeModal(elements.uploadModal));
-        elements.cancelUploadBtn.addEventListener('click', () => closeModal(elements.uploadModal));
-        elements.closeChunkModalBtn.addEventListener('click', () => closeModal(elements.chunkModal));
-
-        // File Dropzone setup
-        elements.dropzone.addEventListener('click', () => elements.fileInput.click());
-        elements.dropzone.addEventListener('dragover', (e) => {
+        // Inside Document Vector Search Form
+        elements.vectorSearchForm?.addEventListener('submit', (e) => {
             e.preventDefault();
-            elements.dropzone.classList.add('dragover');
+            handleVectorSearch();
         });
-        elements.dropzone.addEventListener('dragleave', () => elements.dropzone.classList.remove('dragover'));
-        elements.dropzone.addEventListener('drop', (e) => {
+
+        // Settings Sliders & Form
+        elements.chunkSizeInput?.addEventListener('input', (e) => elements.chunkSizeVal.textContent = e.target.value);
+        elements.chunkOverlapInput?.addEventListener('input', (e) => elements.chunkOverlapVal.textContent = e.target.value);
+        elements.topKInput?.addEventListener('input', (e) => elements.topKVal.textContent = e.target.value);
+
+        elements.toggleKeyVisibility?.addEventListener('click', () => {
+            const type = elements.geminiApiKeyInput.type === 'password' ? 'text' : 'password';
+            elements.geminiApiKeyInput.type = type;
+            elements.toggleKeyVisibility.querySelector('i').className = type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+        });
+
+        elements.settingsForm?.addEventListener('submit', (e) => {
             e.preventDefault();
-            elements.dropzone.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) {
-                handleFileSelect(e.dataTransfer.files[0]);
-            }
+            handleSettingsSave();
         });
-        elements.fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFileSelect(e.target.files[0]);
-            }
-        });
-        elements.removeFileBtn.addEventListener('click', clearFileSelect);
-        elements.submitUploadBtn.addEventListener('click', uploadSelectedFile);
-
-        // Filter Table
-        elements.docTableSearch.addEventListener('input', filterDocumentsTable);
-
-        // Vector Search Form
-        elements.vectorSearchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            executeVectorSearch();
-        });
-
-        // Settings Sliders
-        elements.chunkSizeInput.addEventListener('input', (e) => elements.chunkSizeVal.textContent = e.target.value);
-        elements.chunkOverlapInput.addEventListener('input', (e) => elements.chunkOverlapVal.textContent = e.target.value);
-        elements.topKInput.addEventListener('input', (e) => elements.topKVal.textContent = e.target.value);
-
-        // Toggle Key Visibility
-        elements.toggleKeyVisibility.addEventListener('click', () => {
-            const input = elements.geminiApiKeyInput;
-            const icon = elements.toggleKeyVisibility.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'fa-solid fa-eye-slash';
-            } else {
-                input.type = 'password';
-                icon.className = 'fa-solid fa-eye';
-            }
-        });
-
-        elements.settingsForm.addEventListener('submit', handleSettingsSubmit);
     }
 
     // =========================================================================
-    // System Health & Data Fetching
+    // API Integration Functions
     // =========================================================================
 
     async function fetchSystemHealth() {
         try {
-            const res = await fetch('/api/health');
-            if (!res.ok) return;
+            const res = await fetch('${ API_BASE_URL } / api / health');
+            if (!res.ok) throw new Error('Health check failed');
             const data = await res.json();
 
-            elements.vectorStatusText.textContent = `RAG Engine Online`;
-            elements.statTotalChunks.textContent = data.total_chunks;
-            elements.statTotalDocs.textContent = data.documents_count;
-            elements.navDocBadge.textContent = data.documents_count;
+            elements.sidebarDocCount.textContent = data.documents_count;
+            elements.sidebarChunkCount.textContent = data.total_chunks;
+            if (elements.dashTotalDocs) elements.dashTotalDocs.textContent = data.documents_count;
+            if (elements.dashTotalChunks) elements.dashTotalChunks.textContent = data.total_chunks;
+            if (elements.dashTotalQueries) elements.dashTotalQueries.textContent = data.queries_count || 0;
 
-            const sbDoc = document.getElementById('sidebarDocCount');
-            const sbChunk = document.getElementById('sidebarChunkCount');
-            const sbIdx = document.getElementById('sidebarIndexedCount');
-            if (sbDoc) sbDoc.textContent = data.documents_count;
-            if (sbChunk) sbChunk.textContent = data.total_chunks;
-            if (sbIdx) sbIdx.textContent = data.documents_count;
+            const hasKey = data.has_gemini_key;
+            state.hasGeminiKey = hasKey;
 
-            state.hasGeminiKey = data.has_gemini_key;
-            if (data.has_gemini_key) {
-                elements.engineStatusText.textContent = 'RAG Engine: Gemini API';
-            } else {
-                elements.engineStatusText.textContent = 'RAG Engine: Local';
+            const engineName = hasKey ? 'Google Gemini API (gemini-2.5-flash)' : 'Precision Local RAG Engine';
+            elements.sidebarEngineType.textContent = hasKey ? 'Gemini 2.5' : 'Local Precision';
+            if (elements.dashEngineName) elements.dashEngineName.textContent = engineName;
+            if (elements.dashGeminiKeyStatus) {
+                elements.dashGeminiKeyStatus.textContent = hasKey ? 'Active (Connected)' : 'None (Using Local RAG Engine)';
             }
         } catch (err) {
-            console.error('Error fetching health:', err);
+            console.error('[Health Fetch Error]:', err);
+            elements.vectorStatusPill.className = 'rag-status-badge badge-warning';
+            elements.vectorStatusText.textContent = 'RAG Offline';
         }
     }
 
     async function fetchDocumentsList() {
         try {
-            const res = await fetch('/api/documents');
-            if (!res.ok) return;
-            state.documents = await res.json();
-            renderDocumentsTable(state.documents);
-            elements.statTotalDocs.textContent = state.documents.length;
-            elements.navDocBadge.textContent = state.documents.length;
-        } catch (err) {
-            console.error('Error fetching documents:', err);
-        }
-    }
+            const res = await fetch('${ API_BASE_URL}/api/documents');
+            if (!res.ok) throw new Error('Failed to load documents');
+            const docs = await res.json();
+            state.documents = docs;
 
-    async function fetchSettings() {
-        try {
-            const res = await fetch('/api/settings');
-            if (!res.ok) return;
-            const data = await res.json();
+            renderDocumentsTable(docs);
+            renderDocumentSelectors(docs);
+            renderSidebarDocList(docs);
 
-            elements.chunkSizeInput.value = data.chunk_size;
-            elements.chunkSizeVal.textContent = data.chunk_size;
-            elements.chunkOverlapInput.value = data.chunk_overlap;
-            elements.chunkOverlapVal.textContent = data.chunk_overlap;
-            elements.topKInput.value = data.top_k;
-            elements.topKVal.textContent = data.top_k;
-
-            if (data.gemini_api_key_masked) {
-                elements.geminiApiKeyInput.placeholder = `Saved (${data.gemini_api_key_masked})`;
+            if (elements.navDocBadge) {
+                elements.navDocBadge.textContent = docs.length;
+                elements.navDocBadge.style.display = docs.length > 0 ? 'inline-block' : 'none';
             }
         } catch (err) {
-            console.error('Error fetching settings:', err);
+            console.error('[Fetch Documents Error]:', err);
+            showToast('Error loading document library', 'error');
         }
     }
 
-    // =========================================================================
-    // Chat RAG Logic
-    // =========================================================================
+    function renderDocumentSelectors(docs) {
+        let optionsHtml = `<option value="all">🌐 All Uploaded Documents (${docs.length})</option>`;
+        docs.forEach(doc => {
+            const selected = doc.filename === state.selectedDocumentId ? 'selected' : '';
+            optionsHtml += `<option value="${doc.filename}" ${selected}>📄 ${doc.filename} (${doc.chunks_count} chunks)</option>`;
+        });
 
-    function resetChat() {
-        state.chatHistory = [];
-        elements.chatMessages.innerHTML = '';
-        elements.welcomeCard.style.display = 'block';
-        showToast('Started new chat session.', 'info');
+        elements.chatDocSelector.innerHTML = optionsHtml;
+        if (elements.searchDocFilterSelect) {
+            elements.searchDocFilterSelect.innerHTML = optionsHtml;
+        }
+
+        updateSelectedDocUI();
     }
 
-    async function handleChatSubmit() {
-        const query = elements.chatInput.value.strip ? elements.chatInput.value.strip() : elements.chatInput.value.trim();
-        if (!query) return;
+    function updateSelectedDocUI() {
+        const isAll = state.selectedDocumentId === 'all';
+        const activeDoc = state.documents.find(d => d.filename === state.selectedDocumentId);
 
-        // Hide welcome banner
-        elements.welcomeCard.style.display = 'none';
-
-        // Add user message bubble
-        const userTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        appendUserMessage(query, userTimestamp);
-
-        // Record in history
-        state.chatHistory.push({ role: 'user', content: query });
-
-        // Reset input field
-        elements.chatInput.value = '';
-        elements.sendBtn.disabled = true;
-
-        // Show typing indicator
-        elements.typingIndicator.style.display = 'flex';
-        scrollToBottom();
-
-        try {
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: query,
-                    history: state.chatHistory.slice(-6)
-                })
-            });
-
-            elements.typingIndicator.style.display = 'none';
-            elements.sendBtn.disabled = false;
-
-            if (!res.ok) {
-                const errData = await res.json();
-                appendAiMessage("I encountered an error connecting to the library server. Please try again.", [], new Date().toLocaleTimeString(), "Error");
-                showToast(errData.detail || "Error getting answer", "error");
-                return;
+        if (isAll) {
+            elements.activeDocNameText.textContent = 'Querying across all uploaded documents';
+            elements.activeDocStatusText.textContent = `✓ ${state.documents.length} Docs Indexed`;
+            if (elements.rightScopeVal) elements.rightScopeVal.textContent = 'All Uploaded Documents';
+            if (elements.rightChunksVal) {
+                const totalChunks = state.documents.reduce((acc, d) => acc + d.chunks_count, 0);
+                elements.rightChunksVal.textContent = totalChunks;
             }
-
-            const data = await res.json();
-            const aiTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            appendAiMessage(data.answer, data.sources, aiTimestamp, data.engine);
-            state.chatHistory.push({ role: 'assistant', content: data.answer });
-
-        } catch (err) {
-            elements.typingIndicator.style.display = 'none';
-            elements.sendBtn.disabled = false;
-            appendAiMessage("I couldn't reach the server. Please check your backend connection.", [], new Date().toLocaleTimeString(), "Network Error");
-            showToast("Failed to connect to backend", "error");
+        } else if (activeDoc) {
+            elements.activeDocNameText.textContent = `📄 Selected Document: ${activeDoc.filename}`;
+            elements.activeDocStatusText.textContent = `✓ ${activeDoc.chunks_count} Chunks Indexed`;
+            if (elements.rightScopeVal) elements.rightScopeVal.textContent = activeDoc.filename;
+            if (elements.rightChunksVal) elements.rightChunksVal.textContent = activeDoc.chunks_count;
         }
     }
 
-    function appendUserMessage(text, timestamp) {
-        const messageRow = document.createElement('div');
-        messageRow.className = 'message-row user-row';
-        messageRow.innerHTML = `
-            <div class="avatar avatar-user">
-                <i class="fa-solid fa-user"></i>
-            </div>
-            <div class="message-content">
-                <div class="message-bubble">${escapeHtml(text)}</div>
-                <div class="message-meta">${timestamp}</div>
-            </div>
-        `;
-        elements.chatMessages.appendChild(messageRow);
-        scrollToBottom();
-    }
+    function renderSidebarDocList(docs) {
+        if (!docs.length) {
+            elements.sidebarDocList.innerHTML = `<div style="font-size:12px; color:var(--text-muted); padding:8px;">No documents uploaded yet</div>`;
+            return;
+        }
 
-    function appendAiMessage(answer, sources, timestamp, engine) {
-        const messageRow = document.createElement('div');
-        messageRow.className = 'message-row ai-row';
-
-        let sourcesHtml = '';
-        if (sources && sources.length > 0) {
-            sourcesHtml = `
-                <div class="sources-container">
-                    <div class="sources-title">
-                        Sources
-                    </div>
-                    <div class="source-cards-list">
-                        ${sources.map(src => {
-                            const isPdf = src.document.toLowerCase().endsWith('.pdf');
-                            const iconClass = isPdf ? 'fa-solid fa-file-pdf' : 'fa-regular fa-file-lines';
-                            const scoreVal = typeof src.score === 'number' ? src.score : 0.90;
-                            const scoreFormatted = scoreVal.toFixed(2);
-                            return `
-                                <div class="source-card-item">
-                                    <div class="source-file-info">
-                                        <i class="${iconClass}"></i>
-                                        <div>
-                                            <div class="source-doc-name">${escapeHtml(src.document)}</div>
-                                            <div class="source-sec-name">${escapeHtml(src.section || 'General')}</div>
-                                        </div>
-                                    </div>
-                                    <span class="relevance-badge">Relevance: ${scoreFormatted}</span>
-                                </div>
-                            `;
-                        }).join('')}
+        let html = '';
+        docs.forEach(doc => {
+            const isActive = doc.filename === state.selectedDocumentId;
+            html += `
+                <div class="history-item ${isActive ? 'active' : ''}" data-filename="${doc.filename}">
+                    <i class="fa-solid fa-file-contract"></i>
+                    <div class="history-text-wrap">
+                        <span class="history-title">${doc.filename}</span>
+                        <span class="history-time">${doc.chunks_count} Chunks | ${doc.file_type}</span>
                     </div>
                 </div>
             `;
-        }
+        });
 
-        const formattedAnswer = formatMarkdown(answer);
+        elements.sidebarDocList.innerHTML = html;
 
-        messageRow.innerHTML = `
-            <div class="avatar avatar-ai">
-                <i class="fa-solid fa-robot"></i>
-            </div>
-            <div class="message-content">
-                <div class="message-bubble">${formattedAnswer}</div>
-                ${sourcesHtml}
-                <div class="message-meta">
-                    <span>${timestamp}</span>
-                    <span>•</span>
-                    <span>${escapeHtml(engine || 'RAG Engine')}</span>
-                </div>
-            </div>
-        `;
-
-        elements.chatMessages.appendChild(messageRow);
-        scrollToBottom();
+        elements.sidebarDocList.querySelectorAll('.history-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const filename = item.dataset.filename;
+                state.selectedDocumentId = filename;
+                elements.chatDocSelector.value = filename;
+                updateSelectedDocUI();
+                switchTab('chat');
+            });
+        });
     }
-
-    function scrollToBottom() {
-        elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-    }
-
-    // =========================================================================
-    // Knowledge Base Dashboard Handlers
-    // =========================================================================
 
     function renderDocumentsTable(docs) {
-        if (!docs || docs.length === 0) {
+        if (!docs.length) {
             elements.documentsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center" style="padding: 30px; color: var(--text-muted);">
-                        No documents found in knowledge base. Click 'Upload Document' to add library resources.
+                    <td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">
+                        <i class="fa-solid fa-folder-open" style="font-size:32px; margin-bottom:8px; display:block;"></i>
+                        No books or documents uploaded yet. Drag & drop a file to get started!
                     </td>
                 </tr>
             `;
             return;
         }
 
-        elements.documentsTableBody.innerHTML = docs.map(doc => `
-            <tr>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
-                        <i class="${getFileIcon(doc.file_type)}"></i>
-                        ${escapeHtml(doc.filename)}
-                    </div>
-                </td>
-                <td><span class="badge badge-accent">${doc.file_type}</span></td>
-                <td><span class="badge status-success">${doc.status}</span></td>
-                <td><strong>${doc.chunks_count}</strong> chunks</td>
-                <td>${formatBytes(doc.file_size)}</td>
-                <td>${doc.indexed_at}</td>
-                <td class="text-right">
-                    <button class="btn btn-secondary btn-sm" onclick="inspectDocumentChunks('${escapeHtml(doc.filename)}')">
-                        <i class="fa-solid fa-eye"></i> View Chunks
-                    </button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteDocument('${escapeHtml(doc.filename)}')">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        let html = '';
+        docs.forEach(doc => {
+            const sizeMb = (doc.file_size / (1024 * 1024)).toFixed(2);
+            const pageStr = doc.pages_count ? `${doc.pages_count} Pages` : 'N/A';
+
+            html += `
+                <tr>
+                    <td style="font-weight:600;"><i class="fa-solid fa-file-pdf" style="color:var(--accent-blue); margin-right:6px;"></i> ${doc.filename}</td>
+                    <td><span class="badge-green">${doc.file_type}</span></td>
+                    <td>${sizeMb} MB</td>
+                    <td>${pageStr}</td>
+                    <td><strong>${doc.chunks_count}</strong></td>
+                    <td><span class="badge-green">Indexed</span></td>
+                    <td>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn-action-sm action-chat-btn" data-filename="${doc.filename}" title="Ask questions about this book">
+                                <i class="fa-solid fa-comments"></i> Ask
+                            </button>
+                            <button class="btn-action-sm action-summary-btn" data-filename="${doc.filename}" title="Generate Summary">
+                                <i class="fa-solid fa-align-left"></i> Summary
+                            </button>
+                            <button class="btn-action-sm btn-action-danger action-delete-btn" data-filename="${doc.filename}" title="Delete Document">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        elements.documentsTableBody.innerHTML = html;
+
+        // Attach action handlers
+        elements.documentsTableBody.querySelectorAll('.action-chat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filename = btn.dataset.filename;
+                state.selectedDocumentId = filename;
+                elements.chatDocSelector.value = filename;
+                updateSelectedDocUI();
+                switchTab('chat');
+            });
+        });
+
+        elements.documentsTableBody.querySelectorAll('.action-summary-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                openSummaryModal(btn.dataset.filename);
+            });
+        });
+
+        elements.documentsTableBody.querySelectorAll('.action-delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                handleDeleteDocument(btn.dataset.filename);
+            });
+        });
     }
 
-    function filterDocumentsTable() {
-        const query = elements.docTableSearch.value.toLowerCase();
-        const filtered = state.documents.filter(d => d.filename.toLowerCase().includes(query));
-        renderDocumentsTable(filtered);
-    }
+    // =========================================================================
+    // Chat Submission & RAG Answer Generation
+    // =========================================================================
 
-    async function triggerReindex() {
-        elements.reindexBtn.disabled = true;
-        elements.reindexBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Re-indexing...';
+    async function handleChatSubmit() {
+        const query = elements.chatInput.value.trim();
+        if (!query) return;
+
+        // Hide welcome hero card
+        if (elements.welcomeCard) elements.welcomeCard.style.display = 'none';
+
+        // Render User Message Bubble
+        appendMessage('user', query);
+        elements.chatInput.value = '';
+        elements.chatInput.style.height = 'auto';
+
+        // Show Typing Indicator
+        elements.typingIndicator.style.display = 'flex';
+        elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+
+        const requestPayload = {
+            message: query,
+            document_id: state.selectedDocumentId === 'all' ? null : state.selectedDocumentId,
+            history: state.chatHistory.slice(-4)
+        };
 
         try {
-            const res = await fetch('/api/documents/reindex', { method: 'POST' });
+            const res = await fetch('${API_BASE_URL}/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestPayload)
+            });
+
+            elements.typingIndicator.style.display = 'none';
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.detail || 'Failed to generate answer');
+            }
+
             const data = await res.json();
-            showToast(data.message || 'Re-indexing completed!', 'success');
-            fetchSystemHealth();
-            fetchDocumentsList();
+
+            // Store history
+            state.chatHistory.push({ role: 'user', content: query });
+            state.chatHistory.push({ role: 'assistant', content: data.answer });
+
+            // Render AI Response with real sources & expandable retrieved context
+            appendAssistantMessage(data);
+
         } catch (err) {
-            showToast('Re-indexing failed.', 'error');
-        } finally {
-            elements.reindexBtn.disabled = false;
-            elements.reindexBtn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Re-index All';
+            elements.typingIndicator.style.display = 'none';
+            appendMessage('assistant', `⚠️ An error occurred while retrieving document content: ${err.message}`);
+            console.error('[Chat API Error]:', err);
         }
     }
 
-    // Modal Helpers
-    function openModal(modal) {
-        modal.classList.add('active');
-    }
-    function closeModal(modal) {
-        modal.classList.remove('active');
+    function appendMessage(role, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message message-${role}`;
+
+        const avatarIcon = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+        const avatarClass = role === 'user' ? 'avatar-user' : 'avatar-ai';
+
+        msgDiv.innerHTML = `
+            <div class="avatar ${avatarClass}">${avatarIcon}</div>
+            <div class="message-bubble">
+                <div class="message-text">${formatMarkdown(text)}</div>
+            </div>
+        `;
+
+        elements.chatMessages.appendChild(msgDiv);
+        elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
     }
 
-    // File Upload Handler
-    let selectedFileObj = null;
+    function appendAssistantMessage(data) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'message message-assistant';
 
-    function handleFileSelect(file) {
-        selectedFileObj = file;
-        elements.selectedFileName.textContent = `${file.name} (${formatBytes(file.size)})`;
-        elements.dropzone.style.display = 'none';
-        elements.selectedFileInfo.style.display = 'flex';
+        let sourcesHtml = '';
+        if (data.sources && data.sources.length > 0) {
+            sourcesHtml += `<div class="message-sources"><div class="sources-title"><i class="fa-solid fa-book-bookmark"></i> Real Sources:</div><div class="sources-tags">`;
+            data.sources.forEach(src => {
+                const pageStr = src.page ? ` - Page ${src.page}` : '';
+                sourcesHtml += `<span class="source-tag"><i class="fa-solid fa-file-lines"></i> ${src.document}${pageStr} (${src.section})</span>`;
+            });
+            sourcesHtml += `</div></div>`;
+        }
+
+        // Expandable Retrieved Context Accordion
+        let accordionHtml = '';
+        if (data.retrieved_context && data.retrieved_context.length > 0) {
+            accordionHtml += `
+                <div class="context-accordion">
+                    <div class="context-accordion-header">
+                        <span><i class="fa-solid fa-layer-group"></i> View Retrieved Context Chunks (${data.retrieved_context.length})</span>
+                        <i class="fa-solid fa-chevron-down toggle-icon"></i>
+                    </div>
+                    <div class="context-accordion-body">
+            `;
+
+            data.retrieved_context.forEach((chk, idx) => {
+                const pageStr = chk.page ? ` | Page ${chk.page}` : '';
+                accordionHtml += `
+                    <div class="context-chunk-card">
+                        <div class="context-chunk-meta">
+                            <span>Chunk #${idx + 1}: ${chk.document}${pageStr} (${chk.section})</span>
+                            <span class="context-score-badge">Similarity: ${chk.score}</span>
+                        </div>
+                        <div class="context-chunk-text">${escapeHtml(chk.snippet)}</div>
+                    </div>
+                `;
+            });
+
+            accordionHtml += `
+                    </div>
+                </div>
+            `;
+        }
+
+        msgDiv.innerHTML = `
+            <div class="avatar avatar-ai"><i class="fa-solid fa-robot"></i></div>
+            <div class="message-bubble">
+                <div class="message-text">${formatMarkdown(data.answer)}</div>
+                ${sourcesHtml}
+                ${accordionHtml}
+            </div>
+        `;
+
+        // Attach Accordion Toggle Event
+        const accordionHeader = msgDiv.querySelector('.context-accordion-header');
+        if (accordionHeader) {
+            accordionHeader.addEventListener('click', () => {
+                const body = msgDiv.querySelector('.context-accordion-body');
+                const icon = msgDiv.querySelector('.toggle-icon');
+                const isHidden = body.style.display !== 'flex';
+                body.style.display = isHidden ? 'flex' : 'none';
+                icon.className = isHidden ? 'fa-solid fa-chevron-up toggle-icon' : 'fa-solid fa-chevron-down toggle-icon';
+            });
+        }
+
+        elements.chatMessages.appendChild(msgDiv);
+        elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+    }
+
+    function clearChatHistory() {
+        state.chatHistory = [];
+        elements.chatMessages.innerHTML = '';
+        if (elements.welcomeCard) elements.welcomeCard.style.display = 'flex';
+        showToast('Chat history cleared', 'info');
+    }
+
+    // =========================================================================
+    // Document Upload Modal & Processing
+    // =========================================================================
+
+    function openUploadModal() {
+        resetModalFileInput();
+        elements.uploadModal.classList.add('active');
+    }
+
+    function closeUploadModal() {
+        elements.uploadModal.classList.remove('active');
+        resetModalFileInput();
+    }
+
+    function handleFileSelected(file) {
+        if (!file) return;
+        selectedUploadFile = file;
+        elements.modalSelectedFileName.textContent = file.name;
+        elements.modalSelectedFileInfo.style.display = 'flex';
         elements.submitUploadBtn.disabled = false;
     }
 
-    function clearFileSelect() {
-        selectedFileObj = null;
-        elements.fileInput.value = '';
-        elements.dropzone.style.display = 'block';
-        elements.selectedFileInfo.style.display = 'none';
+    function resetModalFileInput() {
+        selectedUploadFile = null;
+        elements.modalFileInput.value = '';
+        elements.modalSelectedFileInfo.style.display = 'none';
         elements.submitUploadBtn.disabled = true;
     }
 
-    async function uploadSelectedFile() {
-        if (!selectedFileObj) return;
+    async function handleFileUpload() {
+        if (!selectedUploadFile) return;
 
         const formData = new FormData();
-        formData.append('file', selectedFileObj);
+        formData.append('file', selectedUploadFile);
 
         elements.submitUploadBtn.disabled = true;
-        elements.submitUploadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ingesting...';
+        elements.submitUploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing & Indexing...`;
 
         try {
-            const res = await fetch('/api/documents/upload', {
+            const res = await fetch('${API_BASE_URL}/api/documents/upload', {
                 method: 'POST',
                 body: formData
             });
 
             if (!res.ok) {
-                const err = await res.json();
-                showToast(err.detail || 'Upload failed', 'error');
-                return;
+                const errData = await res.json();
+                throw new Error(errData.detail || 'Upload failed');
             }
 
             const data = await res.json();
-            showToast(data.message || 'File uploaded and indexed successfully!', 'success');
-            closeModal(elements.uploadModal);
-            clearFileSelect();
-            fetchSystemHealth();
+            showToast(`✓ Document '${data.filename}' successfully uploaded and indexed!`, 'success');
+
+            closeUploadModal();
             fetchDocumentsList();
+            fetchSystemHealth();
+
         } catch (err) {
-            showToast('Failed to upload file to backend.', 'error');
-        } finally {
+            showToast(`Upload Error: ${err.message}`, 'error');
             elements.submitUploadBtn.disabled = false;
-            elements.submitUploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i> Start Upload & Index';
+            elements.submitUploadBtn.innerHTML = `<i class="fa-solid fa-upload"></i> Upload & Index`;
         }
     }
 
-    // Global document delete function for inline table onclick
-    window.deleteDocument = async function(filename) {
-        if (!confirm(`Are you sure you want to delete '${filename}' from the library knowledge base?`)) return;
+    async function handleDeleteDocument(filename) {
+        if (!confirm(`Are you sure you want to delete '${filename}'? This will remove its vector index.`)) return;
 
         try {
             const res = await fetch(`/api/documents/${encodeURIComponent(filename)}`, { method: 'DELETE' });
-            if (!res.ok) {
-                showToast('Failed to delete document.', 'error');
-                return;
+            if (!res.ok) throw new Error('Delete failed');
+
+            showToast(`Document '${filename}' deleted.`, 'info');
+            if (state.selectedDocumentId === filename) {
+                state.selectedDocumentId = 'all';
             }
-            showToast(`Deleted document '${filename}'.`, 'success');
-            fetchSystemHealth();
             fetchDocumentsList();
+            fetchSystemHealth();
         } catch (err) {
-            showToast('Error communicating with backend server.', 'error');
+            showToast(`Delete failed: ${err.message}`, 'error');
         }
-    };
+    }
 
-    // Global document chunk inspector function
-    window.inspectDocumentChunks = async function(filename) {
-        elements.chunkModalBody.innerHTML = '<div class="text-center" style="padding:20px;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top:10px;">Loading chunk vectors...</p></div>';
-        openModal(elements.chunkModal);
-
+    async function triggerReindex() {
+        showToast('Re-indexing vector store knowledge base...', 'info');
         try {
-            const res = await fetch('/api/search', {
+            const res = await fetch('/api/documents/reindex', { method: 'POST' });
+            if (!res.ok) throw new Error('Re-indexing failed');
+            const data = await res.json();
+
+            showToast(`✓ Knowledge base re-indexed (${data.total_chunks} chunks).`, 'success');
+            fetchDocumentsList();
+            fetchSystemHealth();
+        } catch (err) {
+            showToast(`Re-indexing Error: ${err.message}`, 'error');
+        }
+    }
+
+    // =========================================================================
+    // Summarization Feature
+    // =========================================================================
+
+    function openSummaryModal(filename) {
+        currentSummaryFilename = filename;
+        elements.summaryDocName.textContent = filename;
+        elements.summaryContentBox.textContent = 'Generating grounded summary...';
+        elements.summaryModal.classList.add('active');
+
+        // Reset to full summary
+        elements.summaryTypeBtns.forEach(b => b.classList.remove('active'));
+        elements.summaryTypeBtns[0].classList.add('active');
+
+        fetchDocumentSummary(filename, 'full');
+    }
+
+    function closeSummaryModal() {
+        elements.summaryModal.classList.remove('active');
+        currentSummaryFilename = '';
+    }
+
+    async function fetchDocumentSummary(filename, summaryType) {
+        try {
+            const res = await fetch(`/api/documents/${encodeURIComponent(filename)}/summarize`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: filename.replace(/\.[^/.]+$/, ""), top_k: 20 })
+                body: JSON.stringify({ summary_type: summaryType })
             });
 
-            const results = await res.json();
-            const docChunks = results.filter(r => r.document === filename);
+            if (!res.ok) throw new Error('Failed to summarize document');
+            const data = await res.json();
 
-            if (docChunks.length === 0) {
-                elements.chunkModalBody.innerHTML = `<p class="text-muted text-center" style="padding:30px;">No explicit chunk records found for ${escapeHtml(filename)}.</p>`;
-                return;
-            }
-
-            elements.chunkModalBody.innerHTML = `
-                <div style="margin-bottom:14px; font-weight:600; color:var(--accent-primary);">
-                    Found ${docChunks.length} Chunks for Document: ${escapeHtml(filename)}
-                </div>
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    ${docChunks.map((chk, idx) => `
-                        <div class="vector-result-card">
-                            <div class="vector-result-header">
-                                <span class="vector-result-title">Chunk #${chk.chunk_index + 1} | Section: ${escapeHtml(chk.section)}</span>
-                                <span class="badge badge-accent">Length: ${chk.snippet.length} chars</span>
-                            </div>
-                            <div class="vector-result-snippet">${escapeHtml(chk.snippet)}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            elements.summaryContentBox.innerHTML = formatMarkdown(data.summary);
         } catch (err) {
-            elements.chunkModalBody.innerHTML = '<p class="text-danger">Failed to load chunks.</p>';
+            elements.summaryContentBox.textContent = `Error generating summary: ${err.message}`;
         }
-    };
+    }
 
     // =========================================================================
-    // Vector Search Explorer Handlers
+    // Inside Document Search & Settings
     // =========================================================================
 
-    async function executeVectorSearch() {
+    async function handleVectorSearch() {
         const query = elements.vectorQueryInput.value.trim();
         if (!query) return;
 
-        elements.vectorResultsContainer.innerHTML = `
-            <div class="text-center" style="padding:40px; color:var(--text-secondary);">
-                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
-                <p style="margin-top:12px;">Executing Cosine Similarity Vector Search...</p>
-            </div>
-        `;
+        elements.vectorResultsContainer.innerHTML = `<div style="padding:20px; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Searching document passages...</div>`;
 
         try {
-            const res = await fetch('/api/search', {
+            const res = await fetch('${API_BASE_URL}/api/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: query, top_k: 6 })
+                body: JSON.stringify({
+                    query: query,
+                    document_id: state.selectedDocumentId === 'all' ? null : state.selectedDocumentId,
+                    top_k: 8
+                })
             });
 
-            if (!res.ok) {
-                showToast('Vector search failed', 'error');
+            if (!res.ok) throw new Error('Search failed');
+            const results = await res.json();
+
+            if (!results.length) {
+                elements.vectorResultsContainer.innerHTML = `<div style="padding:20px; color:var(--text-muted); text-align:center;">No matching passages found.</div>`;
                 return;
             }
 
-            const data = await res.json();
-            renderVectorResults(data);
+            let html = '';
+            results.forEach((item, idx) => {
+                const pageStr = item.page ? ` | Page ${item.page}` : '';
+                html += `
+                    <div class="panel-card" style="margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-weight:700; font-size:13px;"><i class="fa-solid fa-file-lines" style="color:var(--accent-blue);"></i> Passage #${idx + 1}: ${item.document}${pageStr} (${item.section})</span>
+                            <span class="context-score-badge">Cosine Score: ${item.score}</span>
+                        </div>
+                        <div style="font-family:var(--font-code); font-size:12px; line-height:1.5; background:var(--bg-app); padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-color); white-space:pre-wrap;">${escapeHtml(item.snippet)}</div>
+                    </div>
+                `;
+            });
+
+            elements.vectorResultsContainer.innerHTML = html;
 
         } catch (err) {
-            showToast('Failed to connect to backend', 'error');
+            elements.vectorResultsContainer.innerHTML = `<div style="padding:20px; color:var(--danger-red);">Search Error: ${err.message}</div>`;
         }
     }
 
-    function renderVectorResults(results) {
-        if (!results || results.length === 0) {
-            elements.vectorResultsContainer.innerHTML = `
-                <div class="empty-state">
-                    <i class="fa-solid fa-box-open"></i>
-                    <h3>No Vector Matches Found</h3>
-                    <p>Try refining your query or re-indexing the knowledge base.</p>
-                </div>
-            `;
-            return;
-        }
+    async function fetchSettings() {
+        try {
+            const res = await fetch('${API_BASE_URL}/api/settings');
+            if (!res.ok) return;
+            const data = await res.json();
 
-        elements.vectorResultsContainer.innerHTML = results.map(item => `
-            <div class="vector-result-card">
-                <div class="vector-result-header">
-                    <div class="vector-result-title">
-                        <i class="fa-regular fa-file-lines"></i> ${escapeHtml(item.document)}
-                        <span style="font-weight:400; color:var(--text-secondary); font-size:12px;">(Section: ${escapeHtml(item.section)})</span>
-                    </div>
-                    <span class="score-badge">${Math.round(item.score * 100)}% Cosine Match</span>
-                </div>
-                <div class="vector-result-snippet">"${escapeHtml(item.snippet)}"</div>
-            </div>
-        `).join('');
+            if (elements.chunkSizeInput) {
+                elements.chunkSizeInput.value = data.chunk_size;
+                elements.chunkSizeVal.textContent = data.chunk_size;
+            }
+            if (elements.chunkOverlapInput) {
+                elements.chunkOverlapInput.value = data.chunk_overlap;
+                elements.chunkOverlapVal.textContent = data.chunk_overlap;
+            }
+            if (elements.topKInput) {
+                elements.topKInput.value = data.top_k;
+                elements.topKVal.textContent = data.top_k;
+            }
+            if (data.has_gemini_key && elements.geminiApiKeyInput) {
+                elements.geminiApiKeyInput.placeholder = `Configured (${data.gemini_api_key_masked})`;
+            }
+        } catch (err) {
+            console.error('[Fetch Settings Error]:', err);
+        }
     }
 
-    // =========================================================================
-    // Settings Handlers
-    // =========================================================================
-
-    async function handleSettingsSubmit(e) {
-        e.preventDefault();
+    async function handleSettingsSave() {
         const payload = {
             chunk_size: parseInt(elements.chunkSizeInput.value),
             chunk_overlap: parseInt(elements.chunkOverlapInput.value),
@@ -794,82 +918,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload)
             });
 
-            if (!res.ok) {
-                showToast('Failed to save settings', 'error');
-                return;
-            }
-
-            showToast('Settings saved successfully!', 'success');
+            if (!res.ok) throw new Error('Failed to update settings');
+            showToast('Settings saved successfully.', 'success');
             elements.geminiApiKeyInput.value = '';
-            fetchSystemHealth();
             fetchSettings();
+            fetchSystemHealth();
+
         } catch (err) {
-            showToast('Network error saving settings', 'error');
+            showToast(`Settings Error: ${err.message}`, 'error');
         }
     }
 
     // =========================================================================
-    // Utility Helpers
+    // Utilities
     // =========================================================================
 
     function showToast(message, type = 'info') {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        
-        const iconClass = type === 'success' ? 'fa-solid fa-circle-check' :
-                          type === 'error' ? 'fa-solid fa-circle-xmark' :
-                          'fa-solid fa-circle-info';
-        
-        toast.innerHTML = `<i class="${iconClass}"></i> <span>${escapeHtml(message)}</span>`;
+        toast.textContent = message;
+
         elements.toastContainer.appendChild(toast);
 
         setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
+            toast.remove();
         }, 4000);
+    }
+
+    function escapeHtml(text) {
+        return (text || '')
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     function formatMarkdown(text) {
         if (!text) return '';
-        let html = escapeHtml(text);
-        
+        let str = escapeHtml(text);
+
         // Bold
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        // Bullet points
-        html = html.replace(/(?:^|\n)•\s*(.*?)(?=\n|$)/g, '<br>• $1');
-        html = html.replace(/(?:^|\n)-\s*(.*?)(?=\n|$)/g, '<br>• $1');
+        str = str.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Italic
+        str = str.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        // Inline Code
+        str = str.replace(/`([^`]+)`/g, '<code style="background:var(--bg-hero); padding:2px 6px; border-radius:4px; font-family:var(--font-code); font-size:12px;">$1</code>');
         // Line breaks
-        html = html.replace(/\n\n/g, '<br><br>');
-        
-        return html;
-    }
+        str = str.replace(/\n/g, '<br>');
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    function getFileIcon(type) {
-        switch (type.toUpperCase()) {
-            case 'PDF': return 'fa-solid fa-file-pdf text-danger';
-            case 'DOCX': return 'fa-solid fa-file-word text-info';
-            case 'TEXT': case 'TXT': return 'fa-solid fa-file-lines';
-            case 'MARKDOWN': case 'MD': return 'fa-brands fa-markdown text-accent';
-            default: return 'fa-solid fa-file';
-        }
-    }
-
-    function formatBytes(bytes, decimals = 1) {
-        if (!bytes || bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        return str;
     }
 });

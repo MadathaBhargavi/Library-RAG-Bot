@@ -1324,3 +1324,202 @@ body {
         padding: 0 16px;
     }
 }
+
+/* ==========================================================================
+   Book & Document RAG UI Components
+   ========================================================================== */
+
+/* Topbar Document Selector */
+.doc-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.doc-select-dropdown {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    max-width: 240px;
+}
+
+.doc-select-dropdown:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Selected Document Banner */
+.selected-doc-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background-color: var(--bg-hero);
+    border: 1px solid var(--border-hero);
+    border-radius: var(--radius-md);
+    margin-bottom: 14px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.doc-banner-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--accent-blue);
+}
+
+.doc-banner-status {
+    background-color: var(--success-bg);
+    color: var(--success-green);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+}
+
+/* Expandable Retrieved Context Accordion */
+.context-accordion {
+    margin-top: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-card);
+    overflow: hidden;
+}
+
+.context-accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background-color: var(--bg-app);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.context-accordion-header:hover {
+    background-color: var(--bg-hero);
+    color: var(--accent-blue);
+}
+
+.context-accordion-body {
+    display: none;
+    padding: 12px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.context-chunk-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    background-color: var(--bg-app);
+    font-size: 12px;
+}
+
+.context-chunk-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.context-score-badge {
+    background-color: var(--success-bg);
+    color: var(--success-green);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-family: var(--font-code);
+}
+
+.context-chunk-text {
+    color: var(--text-primary);
+    line-height: 1.5;
+    font-family: var(--font-code);
+    font-size: 11.5px;
+    white-space: pre-wrap;
+    background: #ffffff;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .context-chunk-text {
+    background: #0f172a;
+}
+
+/* Dashboard Grid */
+.dashboard-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.dash-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+.dash-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.dash-card-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.dash-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+/* Summary Modal Types */
+.summary-type-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.summary-type-btn.active {
+    background-color: var(--accent-blue);
+    color: #ffffff;
+    border-color: var(--accent-blue);
+}
+

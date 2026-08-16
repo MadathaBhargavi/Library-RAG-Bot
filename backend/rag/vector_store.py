@@ -58,8 +58,8 @@ class VectorStore:
 
         self.save_to_disk()
 
-    def search(self, query: str, top_k: int = 4, threshold: float = 0.05) -> List[Dict[str, Any]]:
-        """Executes cosine similarity search against stored embeddings."""
+    def search(self, query: str, top_k: int = 4, threshold: float = 0.05, document_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Executes cosine similarity search against stored embeddings with optional document filtering."""
         if not self.chunks or self.embeddings is None or len(self.chunks) == 0:
             return []
 
@@ -82,10 +82,17 @@ class VectorStore:
         results = []
         for idx in ranked_indices:
             score = float(scores[idx])
+            chunk = self.chunks[idx].copy()
+            
+            # Apply document filter if requested
+            if document_id and document_id != "all":
+                source = chunk.get("metadata", {}).get("source", "")
+                if source != document_id and Path(source).name != Path(document_id).name:
+                    continue
+
             if score < threshold and len(results) > 0:
                 continue
 
-            chunk = self.chunks[idx].copy()
             chunk["score"] = round(score, 4)
             results.append(chunk)
 

@@ -1,0 +1,35 @@
+Book Title: Artificial Intelligence and Machine Learning Fundamentals
+Author: Dr. Alex Mercer
+Publication Year: 2025
+Category: Computer Science & Data Science
+
+Section 1: Introduction to Artificial Intelligence
+Artificial Intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think, learn, and reason. Modern AI applications encompass natural language processing, computer vision, robotics, and automated decision-making systems.
+
+Section 2: Supervised vs Unsupervised Learning
+Machine learning algorithms are fundamentally divided into supervised and unsupervised paradigms:
+- Supervised Learning: The algorithm is trained on a labeled dataset consisting of input-output pairs. Common algorithms include Linear Regression, Logistic Regression, Decision Trees, Support Vector Machines (SVM), and Random Forests. Applications include spam detection, medical diagnosis, and stock price forecasting.
+- Unsupervised Learning: The algorithm analyzes unlabeled data to uncover hidden patterns or groupings. Key techniques include K-Means Clustering, Hierarchical Clustering, and Principal Component Analysis (PCA) for dimensionality reduction.
+
+Section 3: Neural Networks and Deep Learning
+Deep Learning is a specialized subfield of machine learning inspired by the biological structure of human brain neural networks. Deep Neural Networks consist of an input layer, multiple hidden layers, and an output layer.
+- Activation Functions: ReLU (Rectified Linear Unit), Sigmoid, and Softmax are used to introduce non-linearity into neural networks.
+- Optimization & Loss: Gradient Descent and Adam Optimizer adjust weights by minimizing loss functions such as Cross-Entropy Loss and Mean Squared Error.
+- Convolutional Neural Networks (CNN): Primarily utilized for visual imagery and image recognition tasks.
+- Recurrent Neural Networks (RNN) & Transformers: Tailored for sequential data, text translation, and natural language processing.
+
+Section 4: Retrieval-Augmented Generation (RAG)
+Retrieval-Augmented Generation (RAG) is a framework that enhances Large Language Models (LLMs) by retrieving relevant facts from an external knowledge store (such as a vector database) before generating a response.
+Key steps in a RAG pipeline:
+1. Document Ingestion: Loading documents (PDF, DOCX, TXT, MD, Images).
+2. Chunking: Splitting text into overlapping semantic passages.
+3. Embedding Generation: Converting text chunks into dense vector representations.
+4. Vector Storage & Indexing: Storing vectors in an indexed matrix for fast cosine similarity search.
+5. Grounded Generation: Passing top-K retrieved context snippets alongside user prompts to LLMs (like Gemini) to produce factual, source-attributed answers without hallucination.
+
+Section 5: Model Evaluation Metrics
+Machine learning models are evaluated using quantitative performance metrics:
+- Accuracy: Ratio of correct predictions to total predictions.
+- Precision & Recall: Precision measures exactness; Recall measures completeness.
+- F1-Score: Harmonic mean of precision and recall.
+- Cosine Similarity: Measures the cosine of the angle between two multi-dimensional vectors, evaluating semantic closeness between queries and document chunks.

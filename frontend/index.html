@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library RAG Bot - AI Knowledge Assistant</title>
-    <meta name="description" content="AI-powered Library Retrieval-Augmented Generation (RAG) Assistant for Central City Library rules, borrowing, digital resources, and services.">
+    <title>Book & Document RAG Assistant</title>
+    <meta name="description" content="Retrieval-Augmented Generation (RAG) Assistant for asking questions about uploaded books, PDFs, DOCX, text files, and images.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,16 +17,16 @@
 <body>
 
     <div class="app-layout">
-        <!-- LEFT SIDEBAR (Dark Navy) -->
+        <!-- LEFT SIDEBAR -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="brand">
                     <div class="brand-icon">
-                        <i class="fa-solid fa-book-bookmark"></i>
+                        <i class="fa-solid fa-book-open"></i>
                     </div>
                     <div class="brand-text">
-                        <h2>Library RAG Bot</h2>
-                        <span class="brand-subtitle">Smart AI Assistant</span>
+                        <h2>DOCUMENT RAG</h2>
+                        <span class="brand-subtitle">Book & Document Assistant</span>
                     </div>
                 </div>
                 <button class="mobile-close-btn" id="closeSidebarBtn" title="Close Sidebar">
@@ -41,84 +41,61 @@
             </div>
 
             <nav class="sidebar-nav">
-                <div class="nav-section-label">MAIN MENU</div>
+                <div class="nav-section-label">MAIN NAVIGATION</div>
                 <button class="nav-item active" data-tab="chat">
                     <i class="fa-solid fa-comments"></i>
                     <span>Chat Assistant</span>
                 </button>
-                <button class="nav-item" data-tab="knowledge">
-                    <i class="fa-solid fa-book"></i>
-                    <span>Knowledge Base</span>
-                    <span class="badge" id="navDocBadge" style="display:none;">5</span>
+                <button class="nav-item" data-tab="documents">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>My Documents</span>
+                    <span class="badge" id="navDocBadge" style="display:none;">0</span>
                 </button>
                 <button class="nav-item" data-tab="vector-search">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <span>Vector Search</span>
+                    <span>Document Search</span>
+                </button>
+                <button class="nav-item" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>RAG Dashboard</span>
                 </button>
                 <button class="nav-item" data-tab="settings">
-                    <i class="fa-solid fa-gear"></i>
+                    <i class="fa-solid fa-sliders"></i>
                     <span>Settings</span>
                 </button>
             </nav>
 
             <div class="sidebar-history">
-                <div class="nav-section-label">RECENT CONVERSATIONS</div>
-                <div class="history-list" id="historyList">
-                    <div class="history-item" data-topic="What are the library opening hours?">
-                        <i class="fa-solid fa-arrow-down-to-bracket"></i>
-                        <div class="history-text-wrap">
-                            <span class="history-title">Library Hours & Rules</span>
-                            <span class="history-time">2 min ago</span>
-                        </div>
-                    </div>
-                    <div class="history-item" data-topic="How can I become a library member?">
-                        <i class="fa-solid fa-arrow-down-to-bracket"></i>
-                        <div class="history-text-wrap">
-                            <span class="history-title">Membership Information</span>
-                            <span class="history-time">15 min ago</span>
-                        </div>
-                    </div>
-                    <div class="history-item" data-topic="How many books can I borrow?">
-                        <i class="fa-solid fa-arrow-down-to-bracket"></i>
-                        <div class="history-text-wrap">
-                            <span class="history-title">Book Search</span>
-                            <span class="history-time">1 hour ago</span>
-                        </div>
-                    </div>
+                <div class="nav-section-label">MY UPLOADS</div>
+                <div class="history-list" id="sidebarDocList">
+                    <!-- Dynamic Document Quick Selector List -->
                 </div>
-                <button class="btn-view-all-chats" id="clearChatBtn">
-                    View All Chats
-                </button>
             </div>
 
-            <!-- Bottom KB Status Card -->
+            <!-- Bottom RAG Engine Status Card -->
             <div class="sidebar-kb-status">
-                <h4>Knowledge Base Status</h4>
+                <h4>Vector Store Status</h4>
                 <div class="kb-status-rows">
                     <div class="kb-status-row">
                         <span>Documents</span>
-                        <span id="sidebarDocCount">5</span>
+                        <span id="sidebarDocCount">0</span>
                     </div>
                     <div class="kb-status-row">
-                        <span>Chunks</span>
-                        <span id="sidebarChunkCount">254</span>
+                        <span>Total Chunks</span>
+                        <span id="sidebarChunkCount">0</span>
                     </div>
                     <div class="kb-status-row">
-                        <span>Indexed</span>
-                        <span id="sidebarIndexedCount">5</span>
-                    </div>
-                    <div class="kb-status-row">
-                        <span>Last Updated</span>
-                        <span id="sidebarLastSync">Today, 10:30 AM</span>
+                        <span>RAG Engine</span>
+                        <span id="sidebarEngineType" class="badge-green">Online</span>
                     </div>
                 </div>
                 <button class="btn-refresh-status" id="refreshStatusBtn">
-                    Refresh Status
+                    <i class="fa-solid fa-rotate"></i> Refresh Status
                 </button>
             </div>
         </aside>
 
-        <!-- MAIN AREA ARCHITECTURE (Top Header + Center & Right Panel Grid) -->
+        <!-- MAIN CONTENT AREA -->
         <div class="main-wrapper">
             <!-- Global Top Header -->
             <header class="topbar">
@@ -127,81 +104,94 @@
                         <i class="fa-solid fa-bars"></i>
                     </button>
                     <div class="topbar-title-wrap">
-                        <h1 id="pageTitle">Library RAG Assistant</h1>
-                        <p>Your smart library information companion</p>
+                        <h1 id="pageTitle">Book & Document RAG Assistant</h1>
+                        <p id="pageSubtitle">Ask questions about your uploaded books and documents</p>
                     </div>
                 </div>
 
                 <div class="topbar-right">
+                    <!-- Document Target Selector Dropdown -->
+                    <div class="doc-selector-wrapper">
+                        <label for="chatDocSelector"><i class="fa-solid fa-filter"></i> Target:</label>
+                        <select id="chatDocSelector" class="doc-select-dropdown">
+                            <option value="all">🌐 All Uploaded Documents</option>
+                        </select>
+                    </div>
+
                     <div class="rag-status-badge" id="vectorStatusPill">
                         <span class="status-dot-green"></span>
-                        <span id="vectorStatusText">RAG Engine Online</span>
+                        <span id="vectorStatusText">RAG Online</span>
                     </div>
-                    <!-- Hidden element for JS state -->
-                    <span id="engineStatusText" style="display:none;">RAG Engine: Local</span>
 
-                    <button class="topbar-action-btn" id="themeToggleBtn" title="Toggle Theme">
+                    <button class="topbar-action-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
                         <i class="fa-solid fa-moon"></i>
                     </button>
-                    <button class="topbar-action-btn" id="headerSettingsBtn" title="Settings">
-                        <i class="fa-solid fa-bell"></i>
-                    </button>
-                    <div class="user-avatar-badge" title="Library User">
-                        <span>L</span>
+                    <div class="user-avatar-badge" title="RAG User">
+                        <span>RAG</span>
                     </div>
                 </div>
             </header>
 
-            <!-- WORKSPACE CONTENT AREA -->
+            <!-- WORKSPACE CONTAINER -->
             <div class="content-workspace">
                 
-                <!-- TAB 1: Chat Assistant View (Center Workspace + Right Sidebar Panel) -->
+                <!-- TAB 1: Chat Assistant View -->
                 <section class="tab-view active" id="tab-chat">
                     <div class="chat-workspace-grid">
                         
-                        <!-- Center Chat Main Focus Area -->
+                        <!-- Center Chat Area -->
                         <div class="center-chat-area">
-                            <!-- Welcome Hero Card (Blue) -->
+                            <!-- Hero Upload Banner -->
                             <div class="welcome-card" id="welcomeCard">
                                 <div class="welcome-icon-box">
-                                    <i class="fa-solid fa-robot"></i>
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
                                 </div>
                                 <div class="welcome-content">
-                                    <h2>Welcome to Central City Library RAG Assistant</h2>
-                                    <p>Ask me anything about books, library resources, rules, services, documents, membership, or any information available in our library knowledge base.</p>
+                                    <h2>Upload a book or document and ask questions about its content</h2>
+                                    <p>Our Retrieval-Augmented Generation (RAG) assistant extracts text, creates vector embeddings, and answers your questions strictly using the uploaded content with real source citations.</p>
+                                    <div class="welcome-actions">
+                                        <button class="btn-full-blue" id="heroUploadBtn" style="width:auto; padding:8px 18px;">
+                                            <i class="fa-solid fa-upload"></i> Upload Book / Document
+                                        </button>
+                                        <span class="supported-formats-text">Supports PDF, TXT, DOCX, MD, and Images/OCR</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Suggested Questions -->
+                            <!-- Selected Document Status Banner -->
+                            <div class="selected-doc-banner" id="selectedDocBanner">
+                                <div class="doc-banner-info">
+                                    <i class="fa-solid fa-file-contract"></i>
+                                    <span id="activeDocNameText">Querying across all uploaded documents</span>
+                                </div>
+                                <span class="doc-banner-status" id="activeDocStatusText">✓ Index Active</span>
+                            </div>
+
+                            <!-- Suggested Questions Pills -->
                             <div class="suggested-section">
-                                <h3>Suggested Questions</h3>
                                 <div class="suggested-grid" id="suggestedPills">
-                                    <div class="suggested-card pill-btn" data-query="What are the library opening hours?">
-                                        <i class="fa-regular fa-clock"></i>
-                                        <span>What are the library opening hours?</span>
+                                    <div class="suggested-card pill-btn" data-query="What is the main topic of this document?">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                        <span>What is the main topic of this document?</span>
                                     </div>
-                                    <div class="suggested-card pill-btn" data-query="How many books can I borrow?">
-                                        <i class="fa-solid fa-book-open"></i>
-                                        <span>How many books can I borrow?</span>
+                                    <div class="suggested-card pill-btn" data-query="Summarize Chapter 1 or the main introductory section.">
+                                        <i class="fa-solid fa-align-left"></i>
+                                        <span>Summarize the main section</span>
                                     </div>
-                                    <div class="suggested-card pill-btn" data-query="What is the fine for late returns?">
-                                        <i class="fa-solid fa-dollar-sign"></i>
-                                        <span>What is the fine for late returns?</span>
+                                    <div class="suggested-card pill-btn" data-query="What are the key concepts and definitions discussed?">
+                                        <i class="fa-solid fa-key"></i>
+                                        <span>What are the key concepts discussed?</span>
                                     </div>
-                                    <div class="suggested-card pill-btn" data-query="How can I become a library member?">
-                                        <i class="fa-solid fa-user"></i>
-                                        <span>How can I become a library member?</span>
-                                    </div>
-                                    <div class="suggested-card pill-btn" data-query="What digital resources are available?">
-                                        <i class="fa-solid fa-desktop"></i>
-                                        <span>What digital resources are available?</span>
+                                    <div class="suggested-card pill-btn" data-query="Explain the algorithms, methods, or formulas mentioned.">
+                                        <i class="fa-solid fa-lightbulb"></i>
+                                        <span>Explain methods & algorithms</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Chat Messages Stream -->
                             <div class="chat-messages" id="chatMessages">
-                                <!-- Dynamic user and AI message bubbles appended here -->
+                                <!-- Dynamic message bubbles -->
                             </div>
 
                             <!-- Typing Indicator -->
@@ -210,145 +200,112 @@
                                     <i class="fa-solid fa-robot"></i>
                                 </div>
                                 <div class="typing-bubble">
-                                    <span>Searching Library Knowledge Base...</span>
+                                    <i class="fa-solid fa-magnifying-glass fa-spin"></i>
+                                    <span>Searching document chunks and synthesizing answer...</span>
                                 </div>
                             </div>
 
-                            <!-- Sticky Chat Input Area Card -->
+                            <!-- Sticky Chat Input Bar -->
                             <div class="chat-input-sticky-card">
                                 <div class="input-left-icons">
-                                    <button type="button" id="attachBtn" title="Attach Document"><i class="fa-solid fa-paperclip"></i></button>
-                                    <button type="button" id="docIconBtn" title="Library Docs"><i class="fa-regular fa-file-lines"></i></button>
+                                    <button type="button" id="chatAttachBtn" title="Upload New Document"><i class="fa-solid fa-paperclip"></i></button>
                                 </div>
-                                <form id="chatForm" style="flex:1; display:flex; align-items:center;">
+                                <form id="chatForm" style="flex:1; display:flex; align-items:center; gap:10px;">
                                     <textarea 
                                         class="chat-textarea" 
                                         id="chatInput" 
-                                        placeholder="Ask your library question..." 
+                                        placeholder="Ask anything related to your uploaded book or document..." 
                                         rows="1"
                                         required
                                     ></textarea>
                                     <button type="submit" class="btn-send" id="sendBtn">
-                                        <i class="fa-solid fa-paper-plane"></i> Send
+                                        <i class="fa-solid fa-paper-plane"></i> Ask
                                     </button>
                                 </form>
                             </div>
                         </div>
 
-                        <!-- Right Sidebar Panel -->
+                        <!-- Right Panel: Document Details & Quick Actions -->
                         <aside class="right-panel">
-                            <!-- Knowledge Base Overview Card -->
+                            <!-- Selected Document Overview Card -->
                             <div class="panel-card">
-                                <h3>Knowledge Base Overview</h3>
-                                <div class="kb-overview-grid">
+                                <h3><i class="fa-solid fa-circle-info"></i> Document Context</h3>
+                                <div class="doc-context-details" id="rightDocContextDetails">
                                     <div class="kb-stat-tile">
                                         <div class="kb-stat-icon tile-blue">
-                                            <i class="fa-regular fa-file-lines"></i>
+                                            <i class="fa-solid fa-folder"></i>
                                         </div>
                                         <div class="kb-stat-info">
-                                            <span class="kb-stat-label">Documents</span>
-                                            <span class="kb-stat-value" id="statTotalDocs">5</span>
+                                            <span class="kb-stat-label">Active Scope</span>
+                                            <span class="kb-stat-value" id="rightScopeVal" style="font-size:13px;">All Documents</span>
                                         </div>
                                     </div>
                                     <div class="kb-stat-tile">
                                         <div class="kb-stat-icon tile-purple">
-                                            <i class="fa-solid fa-cubes"></i>
+                                            <i class="fa-solid fa-layer-group"></i>
                                         </div>
                                         <div class="kb-stat-info">
-                                            <span class="kb-stat-label">Chunks</span>
-                                            <span class="kb-stat-value" id="statTotalChunks">254</span>
-                                        </div>
-                                    </div>
-                                    <div class="kb-stat-tile">
-                                        <div class="kb-stat-icon tile-green">
-                                            <i class="fa-solid fa-shield"></i>
-                                        </div>
-                                        <div class="kb-stat-info">
-                                            <span class="kb-stat-label">Indexed</span>
-                                            <span class="kb-stat-value" id="statStorageEngine">5</span>
-                                        </div>
-                                    </div>
-                                    <div class="kb-stat-tile">
-                                        <div class="kb-stat-icon tile-amber">
-                                            <i class="fa-regular fa-clock"></i>
-                                        </div>
-                                        <div class="kb-stat-info">
-                                            <span class="kb-stat-label">Last Updated</span>
-                                            <span class="kb-stat-value" id="statLastSync" style="font-size:11px;">Today, 10:30 AM</span>
+                                            <span class="kb-stat-label">Indexed Chunks</span>
+                                            <span class="kb-stat-value" id="rightChunksVal">0</span>
                                         </div>
                                     </div>
                                 </div>
-                                <button class="btn-full-blue" id="goToKbBtn">
-                                    Go to Knowledge Base
+                                <button class="btn-full-blue" id="goToDocsBtn" style="margin-top:12px;">
+                                    <i class="fa-solid fa-folder-open"></i> Manage My Documents
                                 </button>
-                            </div>
-
-                            <!-- System Status Card -->
-                            <div class="panel-card">
-                                <h3>System Status</h3>
-                                <div class="system-status-list">
-                                    <div class="status-row-item">
-                                        <span class="status-row-label"><i class="fa-solid fa-bullseye"></i> RAG Engine</span>
-                                        <span class="badge-green">Online</span>
-                                    </div>
-                                    <div class="status-row-item">
-                                        <span class="status-row-label"><i class="fa-solid fa-database"></i> Vector Database</span>
-                                        <span class="badge-green">Connected</span>
-                                    </div>
-                                    <div class="status-row-item">
-                                        <span class="status-row-label"><i class="fa-solid fa-check-square"></i> LLM Service</span>
-                                        <span class="badge-green">Connected</span>
-                                    </div>
-                                    <div class="status-row-item">
-                                        <span class="status-row-label"><i class="fa-solid fa-arrows-up-down-left-right"></i> API Server</span>
-                                        <span class="badge-green">Running</span>
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- Quick Actions Card -->
                             <div class="panel-card">
-                                <h3>Quick Actions</h3>
+                                <h3><i class="fa-solid fa-bolt"></i> Quick Actions</h3>
                                 <div class="quick-actions-list">
                                     <button class="quick-action-btn" id="quickUploadBtn">
-                                        <i class="fa-solid fa-upload"></i> Upload Document
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Document
                                     </button>
                                     <button class="quick-action-btn" id="quickReindexBtn">
-                                        <i class="fa-solid fa-rotate"></i> Re-index All
+                                        <i class="fa-solid fa-rotate"></i> Re-index Vector Store
                                     </button>
                                     <button class="quick-action-btn" id="quickClearBtn">
-                                        <i class="fa-solid fa-trash"></i> Clear Chat
+                                        <i class="fa-solid fa-broom"></i> Clear Chat History
                                     </button>
                                 </div>
                             </div>
 
-                            <!-- About Library RAG Bot Card -->
+                            <!-- Grounding Rule Card -->
                             <div class="panel-card">
-                                <h3>About Library RAG Bot</h3>
-                                <p class="about-card-text">This assistant answers questions based only on our library documents and resources. If the information is not available in the knowledge base, I will let you know.</p>
-                                <div class="about-footer-icon">
-                                    <i class="fa-solid fa-book-open"></i>
-                                </div>
+                                <h3><i class="fa-solid fa-shield-halved"></i> Grounded RAG Guarantee</h3>
+                                <p class="about-card-text">Every answer is synthesized strictly from retrieved passages in your uploaded files. If information is missing, the AI explicitly alerts you rather than inventing fake data.</p>
                             </div>
                         </aside>
                     </div>
                 </section>
 
-                <!-- TAB 2: Knowledge Base Page -->
-                <section class="tab-view" id="tab-knowledge">
+                <!-- TAB 2: My Documents View -->
+                <section class="tab-view" id="tab-documents">
                     <div class="page-container">
                         <div class="page-header">
-                            <h2>Knowledge Base Management</h2>
-                            <p>Upload, inspect, and manage documents powering the Library RAG system.</p>
+                            <h2>My Documents ("Document Library")</h2>
+                            <p>Upload, view, summarize, search inside, and manage your book files and documents.</p>
                         </div>
 
+                        <!-- Dropzone Upload Card -->
+                        <div class="panel-card" style="margin-bottom:24px;">
+                            <div class="dropzone" id="documentsTabDropzone">
+                                <i class="fa-solid fa-cloud-arrow-up" style="font-size:38px; color:var(--accent-blue); margin-bottom:10px;"></i>
+                                <p style="font-size:15px; font-weight:600; margin-bottom:4px;">Drag & drop books or documents here to upload</p>
+                                <span style="font-size:12px; color:var(--text-muted);">Supports PDF, DOCX, TXT, MD, and Images (.png, .jpg, .webp) up to 25MB</span>
+                                <button type="button" class="btn-full-blue" id="dropzoneBrowseBtn" style="width:auto; margin-top:14px; padding:8px 20px;">
+                                    Browse Files
+                                </button>
+                                <input type="file" id="documentsTabFileInput" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp" style="display:none;">
+                            </div>
+                        </div>
+
+                        <!-- Documents Table Card -->
                         <div class="data-table-card">
                             <div class="data-table-header">
                                 <div class="table-actions-left" style="display:flex; gap:10px;">
-                                    <button class="btn-full-blue" id="openUploadModalBtn" style="width:auto; padding:8px 16px;">
-                                        <i class="fa-solid fa-upload"></i> Upload Document
-                                    </button>
-                                    <button class="btn-action-sm" id="reindexBtn" style="padding:8px 16px;">
+                                    <button class="btn-action-sm" id="reindexAllBtn" style="padding:8px 16px;">
                                         <i class="fa-solid fa-arrows-rotate"></i> Re-index All
                                     </button>
                                     <button class="btn-action-sm" id="refreshDocsBtn" style="padding:8px 16px;">
@@ -357,15 +314,17 @@
                                 </div>
                                 <div class="table-search-box">
                                     <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="text" id="docTableSearch" placeholder="Search documents...">
+                                    <input type="text" id="docTableSearch" placeholder="Filter documents by name...">
                                 </div>
                             </div>
                             <div style="overflow-x:auto;">
                                 <table class="data-table" id="documentsTable">
                                     <thead>
                                         <tr>
-                                            <th>Document</th>
-                                            <th>Type</th>
+                                            <th>Document Name</th>
+                                            <th>Format</th>
+                                            <th>File Size</th>
+                                            <th>Pages</th>
                                             <th>Chunks</th>
                                             <th>Status</th>
                                             <th>Actions</th>
@@ -380,18 +339,21 @@
                     </div>
                 </section>
 
-                <!-- TAB 3: Vector Search Page -->
+                <!-- TAB 3: Inside Document Search View -->
                 <section class="tab-view" id="tab-vector-search">
                     <div class="page-container">
                         <div class="page-header">
-                            <h2>Vector Search Explorer</h2>
-                            <p>Search the indexed library knowledge base using real cosine vector similarity.</p>
+                            <h2>Inside Document Search</h2>
+                            <p>Perform semantic and keyword search across your indexed document passages with cosine similarity scoring.</p>
                         </div>
 
                         <div class="panel-card" style="margin-bottom:20px;">
-                            <form id="vectorSearchForm" style="display:flex; gap:10px;">
-                                <input type="text" id="vectorQueryInput" class="chat-textarea" placeholder="Search library documents (e.g. 'opening hours')..." style="flex:1; border:1px solid var(--border-color); border-radius:var(--radius-md); padding:10px 14px; background:var(--bg-app);" required>
-                                <button type="submit" class="btn-full-blue" style="width:auto; padding:10px 20px;">
+                            <form id="vectorSearchForm" style="display:flex; gap:12px; flex-wrap:wrap;">
+                                <input type="text" id="vectorQueryInput" class="chat-textarea" placeholder="Search keywords or concepts inside document (e.g. 'neural network architecture')..." style="flex:1; min-width:280px; border:1px solid var(--border-color); border-radius:var(--radius-md); padding:10px 14px; background:var(--bg-app);" required>
+                                <select id="searchDocFilterSelect" class="doc-select-dropdown" style="padding:10px 14px; background:var(--bg-app); border:1px solid var(--border-color);">
+                                    <option value="all">Search All Documents</option>
+                                </select>
+                                <button type="submit" class="btn-full-blue" style="width:auto; padding:10px 22px;">
                                     <i class="fa-solid fa-magnifying-glass"></i> Search
                                 </button>
                             </form>
@@ -403,18 +365,85 @@
                     </div>
                 </section>
 
-                <!-- TAB 4: Settings Page -->
+                <!-- TAB 4: RAG Dashboard View -->
+                <section class="tab-view" id="tab-dashboard">
+                    <div class="page-container">
+                        <div class="page-header">
+                            <h2>RAG Dashboard & Metrics</h2>
+                            <p>Real-time analytics for indexed files, vector store chunks, query volume, and model engine health.</p>
+                        </div>
+
+                        <div class="dashboard-stats-grid">
+                            <div class="dash-card">
+                                <div class="dash-card-icon tile-blue">
+                                    <i class="fa-solid fa-file-lines"></i>
+                                </div>
+                                <div class="dash-card-content">
+                                    <span class="dash-label">Uploaded Documents</span>
+                                    <span class="dash-value" id="dashTotalDocs">0</span>
+                                </div>
+                            </div>
+                            <div class="dash-card">
+                                <div class="dash-card-icon tile-purple">
+                                    <i class="fa-solid fa-layer-group"></i>
+                                </div>
+                                <div class="dash-card-content">
+                                    <span class="dash-label">Indexed Chunks</span>
+                                    <span class="dash-value" id="dashTotalChunks">0</span>
+                                </div>
+                            </div>
+                            <div class="dash-card">
+                                <div class="dash-card-icon tile-green">
+                                    <i class="fa-solid fa-comments"></i>
+                                </div>
+                                <div class="dash-card-content">
+                                    <span class="dash-label">Queries Processed</span>
+                                    <span class="dash-value" id="dashTotalQueries">0</span>
+                                </div>
+                            </div>
+                            <div class="dash-card">
+                                <div class="dash-card-icon tile-amber">
+                                    <i class="fa-solid fa-brain"></i>
+                                </div>
+                                <div class="dash-card-content">
+                                    <span class="dash-label">LLM Engine</span>
+                                    <span class="dash-value" id="dashEngineName" style="font-size:14px;">Precision Local RAG</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-card" style="margin-top:24px;">
+                            <h3>Vector Storage Status</h3>
+                            <div class="system-status-list" style="margin-top:14px;">
+                                <div class="status-row-item">
+                                    <span class="status-row-label"><i class="fa-solid fa-database"></i> Persistence Layer</span>
+                                    <span class="badge-green">index_store.json + embeddings.npy</span>
+                                </div>
+                                <div class="status-row-item">
+                                    <span class="status-row-label"><i class="fa-solid fa-calculator"></i> Vector Similarity Metric</span>
+                                    <span class="badge-green">Cosine Similarity (Normalized Dot Product)</span>
+                                </div>
+                                <div class="status-row-item">
+                                    <span class="status-row-label"><i class="fa-solid fa-key"></i> Gemini API Key</span>
+                                    <span class="badge-green" id="dashGeminiKeyStatus">Checking...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 5: Settings Page -->
                 <section class="tab-view" id="tab-settings">
                     <div class="page-container">
                         <div class="page-header">
-                            <h2>System & RAG Configuration</h2>
-                            <p>Configure model settings, chunk sizes, and system parameters.</p>
+                            <h2>RAG Parameters & Settings</h2>
+                            <p>Configure chunking sizes, overlap, similarity threshold, top-k retrieval, and Gemini API keys.</p>
                         </div>
 
-                        <form id="settingsForm" style="display:flex; flex-direction:column; gap:20px; max-width:700px;">
+                        <form id="settingsForm" style="display:flex; flex-direction:column; gap:20px; max-width:720px;">
                             <div class="panel-card">
-                                <h3>RAG Parameters</h3>
-                                <div style="display:flex; flex-direction:column; gap:14px;">
+                                <h3>Retrieval & Chunking Configuration</h3>
+                                <div style="display:flex; flex-direction:column; gap:16px; margin-top:12px;">
                                     <div>
                                         <label style="font-size:13px; font-weight:600;">Chunk Size (Characters): <span id="chunkSizeVal" class="badge-green">600</span></label>
                                         <input type="range" id="chunkSizeInput" min="300" max="1500" step="50" value="600" style="width:100%; margin-top:6px;">
@@ -424,26 +453,27 @@
                                         <input type="range" id="chunkOverlapInput" min="20" max="300" step="10" value="100" style="width:100%; margin-top:6px;">
                                     </div>
                                     <div>
-                                        <label style="font-size:13px; font-weight:600;">Top K Results to Retrieve: <span id="topKVal" class="badge-green">4</span></label>
-                                        <input type="range" id="topKInput" min="1" max="10" step="1" value="4" style="width:100%; margin-top:6px;">
+                                        <label style="font-size:13px; font-weight:600;">Top K Passages to Retrieve: <span id="topKVal" class="badge-green">5</span></label>
+                                        <input type="range" id="topKInput" min="1" max="10" step="1" value="5" style="width:100%; margin-top:6px;">
                                     </div>
                                 </div>
                             </div>
 
                             <div class="panel-card">
-                                <h3>AI Configuration</h3>
-                                <div style="display:flex; flex-direction:column; gap:14px;">
+                                <h3>API Integration</h3>
+                                <div style="display:flex; flex-direction:column; gap:14px; margin-top:12px;">
                                     <div>
-                                        <label style="font-size:13px; font-weight:600;">Gemini API Key</label>
+                                        <label style="font-size:13px; font-weight:600;">Gemini API Key (Optional for Gemini 2.5 Flash)</label>
                                         <div style="display:flex; gap:10px; margin-top:6px;">
                                             <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." style="flex:1; padding:8px 12px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:var(--bg-app); color:var(--text-primary);">
                                             <button type="button" class="btn-action-sm" id="toggleKeyVisibility"><i class="fa-solid fa-eye"></i></button>
                                         </div>
+                                        <span style="font-size:11px; color:var(--text-muted); display:block; margin-top:4px;">If left blank, the application will use the high-precision Local RAG generator fallback.</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn-full-blue" style="width:200px;">Save Settings</button>
+                            <button type="submit" class="btn-full-blue" style="width:200px;">Save Configuration</button>
                         </form>
                     </div>
                 </section>
@@ -455,19 +485,19 @@
     <div class="modal-backdrop" id="uploadModal">
         <div class="modal">
             <div class="modal-header">
-                <h3 style="font-size:16px; font-weight:700;"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Document to Knowledge Base</h3>
+                <h3 style="font-size:16px; font-weight:700;"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Document / Book</h3>
                 <button class="modal-close" id="closeUploadModalBtn" style="background:none; border:none; font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body">
-                <div class="dropzone" id="dropzone">
+                <div class="dropzone" id="modalDropzone">
                     <i class="fa-solid fa-file-arrow-up" style="font-size:36px; color:var(--accent-blue); margin-bottom:10px;"></i>
                     <p style="font-size:14px; font-weight:600; margin-bottom:4px;">Drag & drop document here or <strong>browse files</strong></p>
-                    <span style="font-size:11px; color:var(--text-muted);">Supported formats: PDF, DOCX, TXT, Markdown (.md) up to 20MB</span>
-                    <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" style="display: none;">
+                    <span style="font-size:11px; color:var(--text-muted);">Supports PDF, DOCX, TXT, MD, and Images (.png, .jpg, .webp) up to 25MB</span>
+                    <input type="file" id="modalFileInput" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp" style="display: none;">
                 </div>
-                <div class="selected-file-info" id="selectedFileInfo" style="display: none; padding:12px; background:#f8fafc; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:13px; font-weight:600; justify-content:space-between; align-items:center; margin-top:12px;">
-                    <span><i class="fa-solid fa-file"></i> <span id="selectedFileName">filename.pdf</span></span>
-                    <button type="button" class="btn-action-sm btn-action-danger" id="removeFileBtn"><i class="fa-solid fa-xmark"></i></button>
+                <div class="selected-file-info" id="modalSelectedFileInfo" style="display: none; padding:12px; background:#f8fafc; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:13px; font-weight:600; justify-content:space-between; align-items:center; margin-top:12px;">
+                    <span><i class="fa-solid fa-file"></i> <span id="modalSelectedFileName">filename.pdf</span></span>
+                    <button type="button" class="btn-action-sm btn-action-danger" id="modalRemoveFileBtn"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -479,15 +509,28 @@
         </div>
     </div>
 
-    <!-- Chunk Inspector Modal -->
-    <div class="modal-backdrop" id="chunkModal">
-        <div class="modal" style="max-width:700px;">
+    <!-- Document Summary Modal -->
+    <div class="modal-backdrop" id="summaryModal">
+        <div class="modal" style="max-width:720px;">
             <div class="modal-header">
-                <h3 style="font-size:16px; font-weight:700;"><i class="fa-solid fa-layer-group"></i> Document Chunk Inspector</h3>
-                <button class="modal-close" id="closeChunkModalBtn" style="background:none; border:none; font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <h3 style="font-size:16px; font-weight:700;"><i class="fa-solid fa-align-left"></i> Document Summarizer</h3>
+                <button class="modal-close" id="closeSummaryModalBtn" style="background:none; border:none; font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="modal-body" id="chunkModalBody">
-                <!-- Dynamic Chunks -->
+            <div class="modal-body">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
+                    <span style="font-weight:600; font-size:14px;">Document: <code id="summaryDocName" style="color:var(--accent-blue);">doc.pdf</code></span>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-action-sm summary-type-btn active" data-type="full">Full Summary</button>
+                        <button class="btn-action-sm summary-type-btn" data-type="chapters">Section Breakdown</button>
+                        <button class="btn-action-sm summary-type-btn" data-type="key_points">Key Points</button>
+                    </div>
+                </div>
+                <div class="summary-content-box" id="summaryContentBox" style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:16px; min-height:180px; font-size:14px; line-height:1.6; white-space:pre-wrap;">
+                    Loading document summary...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-action-sm" id="closeSummaryBtn">Close</button>
             </div>
         </div>
     </div>
