@@ -755,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm(`Are you sure you want to delete '${filename}'? This will remove its vector index.`)) return;
 
         try {
-            const res = await fetch(`/api/documents/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+            const res = await fetch('/api/documents/${encodeURIComponent(filename)}', { method: 'DELETE' });
             if (!res.ok) throw new Error('Delete failed');
 
             showToast(`Document '${filename}' deleted.`, 'info');
@@ -772,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function triggerReindex() {
         showToast('Re-indexing vector store knowledge base...', 'info');
         try {
-            const res = await fetch('/api/documents/reindex', { method: 'POST' });
+            const res = await fetch('${API_BASE_URL}/api/documents/reindex', { method: 'POST' });
             if (!res.ok) throw new Error('Re-indexing failed');
             const data = await res.json();
 
@@ -808,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchDocumentSummary(filename, summaryType) {
         try {
-            const res = await fetch(`/api/documents/${encodeURIComponent(filename)}/summarize`, {
+            const res = await fetch('/api/documents/${encodeURIComponent(filename)}/summarize', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ summary_type: summaryType })
@@ -912,7 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const res = await fetch('/api/settings', {
+            const res = await fetch('${API_BASE_URL}/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
