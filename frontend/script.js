@@ -3,7 +3,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE_URL = 'https://library-rag-bot.onrender.com';
     // State Management
     const state = {
         activeTab: 'chat',
@@ -353,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchSystemHealth() {
         try {
-            const res = await fetch('${ API_BASE_URL } / api / health');
+            const res = await fetch('/api/health');
             if (!res.ok) throw new Error('Health check failed');
             const data = await res.json();
 
@@ -381,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchDocumentsList() {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/documents`);
+            const res = await fetch('/api/documents');
             if (!res.ok) throw new Error('Failed to load documents');
             const docs = await res.json();
             state.documents = docs;
@@ -564,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/chat`, {
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestPayload)
@@ -727,7 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.submitUploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing & Indexing...`;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/documents/upload`, {
+            const res = await fetch('/api/documents/upload', {
                 method: 'POST',
                 body: formData
             });
@@ -772,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function triggerReindex() {
         showToast('Re-indexing vector store knowledge base...', 'info');
         try {
-            const res = await fetch(`${API_BASE_URL}/api/documents/reindex`, { method: 'POST' });
+            const res = await fetch('/api/documents/reindex', { method: 'POST' });
             if (!res.ok) throw new Error('Re-indexing failed');
             const data = await res.json();
 
@@ -834,7 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.vectorResultsContainer.innerHTML = `<div style="padding:20px; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Searching document passages...</div>`;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/search`, {
+            const res = await fetch('/api/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -875,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchSettings() {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/settings`);
+            const res = await fetch('/api/settings');
             if (!res.ok) return;
             const data = await res.json();
 
@@ -912,7 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/settings`, {
+            const res = await fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
