@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchDocumentsList() {
         try {
-            const res = await fetch('${ API_BASE_URL}/api/documents');
+            const res = await fetch(`${API_BASE_URL}/api/documents`);
             if (!res.ok) throw new Error('Failed to load documents');
             const docs = await res.json();
             state.documents = docs;
@@ -564,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const res = await fetch('${API_BASE_URL}/api/chat', {
+            const res = await fetch(`${API_BASE_URL}/api/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestPayload)
@@ -727,7 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.submitUploadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing & Indexing...`;
 
         try {
-            const res = await fetch('${API_BASE_URL}/api/documents/upload', {
+            const res = await fetch(`${API_BASE_URL}/api/documents/upload`, {
                 method: 'POST',
                 body: formData
             });
@@ -755,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm(`Are you sure you want to delete '${filename}'? This will remove its vector index.`)) return;
 
         try {
-            const res = await fetch('/api/documents/${encodeURIComponent(filename)}', { method: 'DELETE' });
+            const res = await fetch(`/api/documents/${encodeURIComponent(filename)}`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Delete failed');
 
             showToast(`Document '${filename}' deleted.`, 'info');
@@ -772,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function triggerReindex() {
         showToast('Re-indexing vector store knowledge base...', 'info');
         try {
-            const res = await fetch('${API_BASE_URL}/api/documents/reindex', { method: 'POST' });
+            const res = await fetch(`${API_BASE_URL}/api/documents/reindex`, { method: 'POST' });
             if (!res.ok) throw new Error('Re-indexing failed');
             const data = await res.json();
 
@@ -808,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchDocumentSummary(filename, summaryType) {
         try {
-            const res = await fetch('/api/documents/${encodeURIComponent(filename)}/summarize', {
+            const res = await fetch(`/api/documents/${encodeURIComponent(filename)}/summarize`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ summary_type: summaryType })
@@ -834,7 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.vectorResultsContainer.innerHTML = `<div style="padding:20px; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Searching document passages...</div>`;
 
         try {
-            const res = await fetch('${API_BASE_URL}/api/search', {
+            const res = await fetch(`${API_BASE_URL}/api/search`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -875,7 +875,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchSettings() {
         try {
-            const res = await fetch('${API_BASE_URL}/api/settings');
+            const res = await fetch(`${API_BASE_URL}/api/settings`);
             if (!res.ok) return;
             const data = await res.json();
 
@@ -912,7 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const res = await fetch('${API_BASE_URL}/api/settings', {
+            const res = await fetch(`${API_BASE_URL}/api/settings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
