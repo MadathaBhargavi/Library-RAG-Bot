@@ -24,8 +24,66 @@ queries_counter = 0
 
 SUPPORTED_EXTENSIONS = [".pdf", ".docx", ".txt", ".md", ".png", ".jpg", ".jpeg", ".webp", ".bmp"]
 
+DEFAULT_SAMPLE_FILENAME = "Machine_Learning_Basics.txt"
+DEFAULT_SAMPLE_CONTENT = """Book Title: Artificial Intelligence and Machine Learning Fundamentals
+Author: Dr. Alex Mercer
+Publication Year: 2025
+Category: Computer Science & Data Science
+
+Section 1: Introduction to Artificial Intelligence
+Artificial Intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think, learn, and reason. Modern AI applications encompass natural language processing, computer vision, robotics, and automated decision-making systems.
+
+Section 2: Supervised vs Unsupervised Learning
+Machine learning algorithms are fundamentally divided into supervised and unsupervised paradigms:
+- Supervised Learning: The algorithm is trained on a labeled dataset consisting of input-output pairs. Common algorithms include Linear Regression, Logistic Regression, Decision Trees, Support Vector Machines (SVM), and Random Forests. Applications include spam detection, medical diagnosis, and stock price forecasting.
+- Unsupervised Learning: The algorithm analyzes unlabeled data to uncover hidden patterns or groupings. Key techniques include K-Means Clustering, Hierarchical Clustering, and Principal Component Analysis (PCA) for dimensionality reduction.
+
+Section 3: Neural Networks and Deep Learning
+Deep Learning is a specialized subfield of machine learning inspired by the biological structure of human brain neural networks. Deep Neural Networks consist of an input layer, multiple hidden layers, and an output layer.
+- Activation Functions: ReLU (Rectified Linear Unit), Sigmoid, and Softmax are used to introduce non-linearity into neural networks.
+- Optimization & Loss: Gradient Descent and Adam Optimizer adjust weights by minimizing loss functions such as Cross-Entropy Loss and Mean Squared Error.
+- Convolutional Neural Networks (CNN): Primarily utilized for visual imagery and image recognition tasks.
+- Recurrent Neural Networks (RNN) & Transformers: Tailored for sequential data, text translation, and natural language processing.
+
+Section 4: Retrieval-Augmented Generation (RAG)
+Retrieval-Augmented Generation (RAG) is a framework that enhances Large Language Models (LLMs) by retrieving relevant facts from an external knowledge store (such as a vector database) before generating a response.
+Key steps in a RAG pipeline:
+1. Document Ingestion: Loading documents (PDF, DOCX, TXT, MD, Images).
+2. Chunking: Splitting text into overlapping semantic passages.
+3. Embedding Generation: Converting text chunks into dense vector representations.
+4. Vector Storage & Indexing: Storing vectors in an indexed matrix for fast cosine similarity search.
+5. Grounded Generation: Passing top-K retrieved context snippets alongside user prompts to LLMs (like Gemini) to produce factual, source-attributed answers without hallucination.
+
+Section 5: Model Evaluation Metrics
+Machine learning models are evaluated using quantitative performance metrics:
+- Accuracy: Ratio of correct predictions to total predictions.
+- Precision & Recall: Precision measures exactness; Recall measures completeness.
+- F1-Score: Harmonic mean of precision and recall.
+- Cosine Similarity: Measures the cosine of the angle between two multi-dimensional vectors, evaluating semantic closeness between queries and document chunks.
+"""
+
+def ensure_default_documents():
+    """Ensures at least one default sample document exists in DOCUMENTS_DIR."""
+    docs_dir = settings.DOCUMENTS_DIR
+    os.makedirs(docs_dir, exist_ok=True)
+
+    has_files = any(
+        (docs_dir / f).is_file() and (docs_dir / f).suffix.lower() in SUPPORTED_EXTENSIONS
+        for f in os.listdir(docs_dir)
+    )
+
+    if not has_files:
+        sample_path = docs_dir / DEFAULT_SAMPLE_FILENAME
+        try:
+            with open(sample_path, "w", encoding="utf-8") as f:
+                f.write(DEFAULT_SAMPLE_CONTENT)
+            print(f"[Default Document] Created sample document '{DEFAULT_SAMPLE_FILENAME}' in {docs_dir}")
+        except Exception as e:
+            print(f"[Error creating default sample document]: {e}")
+
 def index_all_documents():
     """Helper function to load and index all files in DOCUMENTS_DIR."""
+    ensure_default_documents()
     vector_store.clear()
     docs_dir = settings.DOCUMENTS_DIR
     splitter = RecursiveTextSplitter(chunk_size=settings.CHUNK_SIZE, chunk_overlap=settings.CHUNK_OVERLAP)
@@ -94,10 +152,12 @@ def chat_endpoint(request: ChatRequest):
 def list_documents():
     """Returns list of uploaded documents with page count, chunk counts, and indexing status."""
     docs_dir = settings.DOCUMENTS_DIR
-    result: List[DocumentInfo] = []
+    ensure_default_documents()
 
-    if not os.path.exists(docs_dir):
-        return []
+    if len(vector_store.chunks) == 0:
+        index_all_documents()
+
+    result: List[DocumentInfo] = []
 
     # Map file -> chunk count and max page
     chunk_counts = {}
